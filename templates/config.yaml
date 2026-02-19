@@ -1,0 +1,9 @@
+version: 1
+audit:
+  enabled: true
+  file: ".sentinex/audit.jsonl"
+approval:
+  mode: "prompt"
+llm:
+  provider: "mock"
+  dryRunDefault: false

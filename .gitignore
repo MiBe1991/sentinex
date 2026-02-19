@@ -1,0 +1,7 @@
+node_modules/
+.sentinex/
+.tmp-tests/
+.tmp-tool-tests/
+bin/cli.js
+bin/core/
+*.tsbuildinfo
