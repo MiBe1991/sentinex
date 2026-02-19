@@ -1,0 +1,20 @@
+{
+  "name": "sentinex-agent",
+  "version": "0.1.0",
+  "description": "Sentinex – Secure Local Agent Runtime (CLI-first, Policy-based)",
+  "type": "module",
+  "bin": {
+    "sentinex": "./bin/sentinex.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./bin/sentinex.js"
+  },
+  "dependencies": {
+    "commander": "^10.0.0",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.0"
+  }
+}
