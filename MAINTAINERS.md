@@ -10,6 +10,28 @@ This document is the operational checklist for maintaining Sentinex.
    - `npm test`
 3. Merge via PR only (squash preferred).
 
+## First 30 Minutes As A New Maintainer
+1. Verify access:
+   - Repository write/admin permissions
+   - GitHub Actions visibility and run permissions
+2. Read core docs:
+   - `README.md`
+   - `CONTRIBUTING.md`
+   - `SECURITY.md`
+   - `CHANGELOG.md`
+3. Confirm branch protections on `main` are active.
+4. Run local baseline checks once:
+   - `npm install`
+   - `npm run build`
+   - `npm run lint:policy`
+   - `npm test`
+5. Trigger and inspect:
+   - CI workflow result
+   - Homepage deploy workflow result
+6. Confirm release flow:
+   - check latest tag and latest GitHub Release
+7. Create or review one small docs PR to validate your end-to-end workflow.
+
 ## Release Workflow
 1. Ensure `main` is green in CI.
 2. Update `CHANGELOG.md` for the new version.
