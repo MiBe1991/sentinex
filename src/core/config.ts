@@ -3,6 +3,7 @@ import path from "node:path";
 import { parse } from "yaml";
 
 export type ApprovalMode = "prompt" | "auto-approve" | "auto-deny";
+export type LlmProviderName = "mock" | "openai";
 
 export type RuntimeConfig = {
   version: number;
@@ -14,7 +15,11 @@ export type RuntimeConfig = {
     mode: ApprovalMode;
   };
   llm: {
-    provider: "mock";
+    provider: LlmProviderName;
+    model: string;
+    baseUrl: string;
+    apiKeyEnv: string;
+    systemPrompt: string;
     dryRunDefault: boolean;
   };
 };
@@ -30,6 +35,11 @@ const DEFAULT_CONFIG: RuntimeConfig = {
   },
   llm: {
     provider: "mock",
+    model: "gpt-4.1-mini",
+    baseUrl: "https://api.openai.com/v1",
+    apiKeyEnv: "OPENAI_API_KEY",
+    systemPrompt:
+      "Return JSON only. Build an action plan with shape: {\"actions\": [...]}. Allowed actions: respond, tool(http.fetch, fs.read).",
     dryRunDefault: false,
   },
 };
@@ -82,8 +92,8 @@ export function validateConfig(raw: unknown): RuntimeConfig {
   const llmRoot = obj.llm === undefined ? {} : asRecord(obj.llm);
 
   const provider = llmRoot.provider;
-  if (provider !== undefined && provider !== "mock") {
-    throw new Error("llm.provider must be 'mock'.");
+  if (provider !== undefined && provider !== "mock" && provider !== "openai") {
+    throw new Error("llm.provider must be 'mock' or 'openai'.");
   }
 
   return {
@@ -96,7 +106,15 @@ export function validateConfig(raw: unknown): RuntimeConfig {
       mode: asApprovalMode(approvalRoot.mode, DEFAULT_CONFIG.approval.mode),
     },
     llm: {
-      provider: "mock",
+      provider: (provider as LlmProviderName | undefined) ?? DEFAULT_CONFIG.llm.provider,
+      model: asString(llmRoot.model, DEFAULT_CONFIG.llm.model, "llm.model"),
+      baseUrl: asString(llmRoot.baseUrl, DEFAULT_CONFIG.llm.baseUrl, "llm.baseUrl"),
+      apiKeyEnv: asString(llmRoot.apiKeyEnv, DEFAULT_CONFIG.llm.apiKeyEnv, "llm.apiKeyEnv"),
+      systemPrompt: asString(
+        llmRoot.systemPrompt,
+        DEFAULT_CONFIG.llm.systemPrompt,
+        "llm.systemPrompt",
+      ),
       dryRunDefault: asBoolean(
         llmRoot.dryRunDefault,
         DEFAULT_CONFIG.llm.dryRunDefault,

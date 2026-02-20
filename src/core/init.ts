@@ -30,6 +30,10 @@ approval:
   mode: "prompt"
 llm:
   provider: "mock"
+  model: "gpt-4.1-mini"
+  baseUrl: "https://api.openai.com/v1"
+  apiKeyEnv: "OPENAI_API_KEY"
+  systemPrompt: "Return JSON only. Build an action plan with shape: {\\"actions\\": [...]}."
   dryRunDefault: false
 `;
 
