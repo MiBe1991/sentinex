@@ -2,6 +2,7 @@ node_modules/
 .sentinex/
 .tmp-tests/
 .tmp-tool-tests/
+.tmp-audit-tests/
 bin/cli.js
 bin/core/
 *.tsbuildinfo

@@ -31,6 +31,8 @@ const DEFAULT_CONFIG_TEMPLATE = `version: 1
 audit:
   enabled: true
   file: ".sentinex/audit.jsonl"
+  maxBytes: 1000000
+  maxFiles: 3
 approval:
   mode: "prompt"
 llm:

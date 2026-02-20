@@ -302,9 +302,25 @@ export async function doctorCLI(options: { json?: boolean; strict?: boolean } = 
     checks.push({
       name: "audit.path",
       ok: true,
-      detail: auditLogger.getPath(),
+      detail: `${auditLogger.getPath()} (maxBytes=${config.audit.maxBytes}, maxFiles=${config.audit.maxFiles})`,
       level: "error",
     });
+    if (!config.audit.enabled) {
+      checks.push({
+        name: "audit.path",
+        ok: true,
+        detail: "audit logging is disabled",
+        level: "warning",
+      });
+    }
+    if (config.audit.maxBytes > 50_000_000) {
+      checks.push({
+        name: "audit.path",
+        ok: true,
+        detail: "audit.maxBytes is very high (>50,000,000)",
+        level: "warning",
+      });
+    }
 
     if (config.llm.provider === "openai") {
       const hasKey = Boolean(process.env[config.llm.apiKeyEnv]);

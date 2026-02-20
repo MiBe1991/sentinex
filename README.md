@@ -59,6 +59,7 @@ $env:OPENAI_API_KEY="your_key_here"
 - Prompt deny rules with priority over allow (`deny.prompts`)
 - Interactive approval workflow (`prompt`, `auto-approve`, `auto-deny`)
 - JSONL audit logging (`run.started`, `action.requested`, `policy.decision`, `action.result`, `run.finished`)
+- Audit rotation via `audit.maxBytes` and `audit.maxFiles`
 - Action model + registry + typed errors
 - Optional provider integration via mock provider and strict action-plan validation
 - OpenAI-compatible provider support via Chat Completions API

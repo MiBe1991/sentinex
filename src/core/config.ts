@@ -10,6 +10,8 @@ export type RuntimeConfig = {
   audit: {
     enabled: boolean;
     file: string;
+    maxBytes: number;
+    maxFiles: number;
   };
   approval: {
     mode: ApprovalMode;
@@ -33,6 +35,8 @@ const DEFAULT_CONFIG: RuntimeConfig = {
   audit: {
     enabled: true,
     file: ".sentinex/audit.jsonl",
+    maxBytes: 1_000_000,
+    maxFiles: 3,
   },
   approval: {
     mode: "prompt",
@@ -134,6 +138,8 @@ export function validateConfig(raw: unknown): RuntimeConfig {
     audit: {
       enabled: asBoolean(auditRoot.enabled, DEFAULT_CONFIG.audit.enabled, "audit.enabled"),
       file: asString(auditRoot.file, DEFAULT_CONFIG.audit.file, "audit.file"),
+      maxBytes: asPositiveNumber(auditRoot.maxBytes, DEFAULT_CONFIG.audit.maxBytes, "audit.maxBytes"),
+      maxFiles: asNonNegativeInteger(auditRoot.maxFiles, DEFAULT_CONFIG.audit.maxFiles, "audit.maxFiles"),
     },
     approval: {
       mode: asApprovalMode(approvalRoot.mode, DEFAULT_CONFIG.approval.mode),
