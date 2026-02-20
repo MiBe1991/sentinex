@@ -20,6 +20,9 @@ export type RuntimeConfig = {
     baseUrl: string;
     apiKeyEnv: string;
     systemPrompt: string;
+    timeoutMs: number;
+    maxRetries: number;
+    retryDelayMs: number;
     dryRunDefault: boolean;
   };
 };
@@ -40,6 +43,9 @@ const DEFAULT_CONFIG: RuntimeConfig = {
     apiKeyEnv: "OPENAI_API_KEY",
     systemPrompt:
       "Return JSON only. Build an action plan with shape: {\"actions\": [...]}. Allowed actions: respond, tool(http.fetch, fs.read).",
+    timeoutMs: 20000,
+    maxRetries: 2,
+    retryDelayMs: 600,
     dryRunDefault: false,
   },
 };
@@ -57,6 +63,31 @@ function asBoolean(value: unknown, fallback: boolean, keyName: string): boolean 
   }
   if (typeof value !== "boolean") {
     throw new Error(`${keyName} must be a boolean.`);
+  }
+  return value;
+}
+
+function asNonNegativeInteger(value: unknown, fallback: number, keyName: string): number {
+  if (value === undefined) {
+    return fallback;
+  }
+  if (
+    typeof value !== "number" ||
+    Number.isNaN(value) ||
+    !Number.isInteger(value) ||
+    value < 0
+  ) {
+    throw new Error(`${keyName} must be a non-negative integer.`);
+  }
+  return value;
+}
+
+function asPositiveNumber(value: unknown, fallback: number, keyName: string): number {
+  if (value === undefined) {
+    return fallback;
+  }
+  if (typeof value !== "number" || Number.isNaN(value) || value <= 0) {
+    throw new Error(`${keyName} must be a positive number.`);
   }
   return value;
 }
@@ -114,6 +145,17 @@ export function validateConfig(raw: unknown): RuntimeConfig {
         llmRoot.systemPrompt,
         DEFAULT_CONFIG.llm.systemPrompt,
         "llm.systemPrompt",
+      ),
+      timeoutMs: asPositiveNumber(llmRoot.timeoutMs, DEFAULT_CONFIG.llm.timeoutMs, "llm.timeoutMs"),
+      maxRetries: asNonNegativeInteger(
+        llmRoot.maxRetries,
+        DEFAULT_CONFIG.llm.maxRetries,
+        "llm.maxRetries",
+      ),
+      retryDelayMs: asPositiveNumber(
+        llmRoot.retryDelayMs,
+        DEFAULT_CONFIG.llm.retryDelayMs,
+        "llm.retryDelayMs",
       ),
       dryRunDefault: asBoolean(
         llmRoot.dryRunDefault,

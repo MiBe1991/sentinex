@@ -76,4 +76,36 @@ describe("OpenAIProvider", () => {
       actions: [{ type: "respond", text: "ok" }],
     });
   });
+
+  it("retries retryable status codes and succeeds", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    const config = validateConfig({
+      version: 1,
+      llm: {
+        provider: "openai",
+        maxRetries: 1,
+        retryDelayMs: 1,
+      },
+    });
+
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("rate limited", { status: 429 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: "{\"actions\":[{\"type\":\"respond\",\"text\":\"ok\"}]}" } }],
+          }),
+          { status: 200 },
+        ),
+      );
+
+    const provider = new OpenAIProvider(config.llm, mockFetch as unknown as typeof fetch);
+    const plan = await provider.generate({ prompt: "retry please" });
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(plan).toEqual({
+      actions: [{ type: "respond", text: "ok" }],
+    });
+  });
 });

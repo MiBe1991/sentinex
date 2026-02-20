@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { program } from "commander";
-import { logsShowCLI, policyTestCLI, runCLI } from "../bin/cli.js";
+import { doctorCLI, logsShowCLI, policyTestCLI, runCLI } from "../bin/cli.js";
 import { initProject } from "../bin/core/init.js";
 
 program
@@ -62,11 +62,24 @@ logs
   .command("show")
   .description("Show recent audit events")
   .option("--limit <n>", "Number of events to show", "20")
+  .option("--json", "Output full JSON events")
+  .option("--run-id <id>", "Filter by run ID")
+  .option("--type <name>", "Filter by event type")
   .action(async (options) => {
     const parsed = Number.parseInt(options.limit, 10);
     await logsShowCLI({
       limit: Number.isNaN(parsed) ? 20 : parsed,
+      json: Boolean(options.json),
+      runId: options.runId,
+      type: options.type,
     });
+  });
+
+program
+  .command("doctor")
+  .description("Check runtime configuration, policy, and provider prerequisites")
+  .action(async () => {
+    await doctorCLI();
   });
 
 program.parse(process.argv);

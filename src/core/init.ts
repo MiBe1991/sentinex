@@ -34,6 +34,9 @@ llm:
   baseUrl: "https://api.openai.com/v1"
   apiKeyEnv: "OPENAI_API_KEY"
   systemPrompt: "Return JSON only. Build an action plan with shape: {\\"actions\\": [...]}."
+  timeoutMs: 20000
+  maxRetries: 2
+  retryDelayMs: 600
   dryRunDefault: false
 `;
 
