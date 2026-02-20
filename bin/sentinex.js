@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { program } from "commander";
-import { doctorCLI, logsExportCLI, logsShowCLI, policyTestCLI, runCLI } from "../bin/cli.js";
+import { doctorCLI, logsExportCLI, logsShowCLI, policyLintCLI, policyTestCLI, runCLI } from "../bin/cli.js";
 import { initProject } from "../bin/core/init.js";
 
 program
@@ -53,6 +53,20 @@ policy
       tool: options.tool,
       url: options.url,
       filePath: options.path,
+    });
+  });
+
+policy
+  .command("lint")
+  .description("Run static policy checks for risky or invalid configurations")
+  .option("--json", "Output lint findings as JSON")
+  .option("--fail-on <level>", "Fail on error|warn|never", "error")
+  .action(async (options) => {
+    const failOn =
+      options.failOn === "warn" || options.failOn === "never" ? options.failOn : "error";
+    await policyLintCLI({
+      json: Boolean(options.json),
+      failOn,
     });
   });
 

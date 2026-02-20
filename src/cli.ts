@@ -42,6 +42,13 @@ const DOCTOR_EXIT_CODES: Record<DoctorCheckName, number> = {
 };
 const DOCTOR_STRICT_WARNING_EXIT_CODE = 64;
 
+type PolicyLintLevel = "error" | "warn";
+type PolicyLintFinding = {
+  level: PolicyLintLevel;
+  code: string;
+  message: string;
+};
+
 export function parseAuditLines(raw: string): AuditEventLine[] {
   const lines = raw
     .split("\n")
@@ -183,6 +190,136 @@ export async function policyTestCLI(options: {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown policy test error.";
     console.error(`Policy test failed: ${message}`);
+  }
+}
+
+export function lintPolicy(policy: Awaited<ReturnType<typeof loadPolicyFromCwd>>): PolicyLintFinding[] {
+  const findings: PolicyLintFinding[] = [];
+
+  if (policy.allow.prompts.includes(".*")) {
+    findings.push({
+      level: "warn",
+      code: "PROMPT_ALLOW_ALL",
+      message: "allow.prompts contains '.*' (very broad rule).",
+    });
+  }
+
+  if (policy.allow.tools["http.fetch"].enabled) {
+    if (policy.allow.tools["http.fetch"].hosts.length === 0) {
+      findings.push({
+        level: "error",
+        code: "HTTP_FETCH_NO_HOSTS",
+        message: "http.fetch is enabled but no allow hosts are configured.",
+      });
+    }
+    if (policy.allow.tools["http.fetch"].hosts.some((host) => host.trim() === "*")) {
+      findings.push({
+        level: "warn",
+        code: "HTTP_FETCH_WILDCARD_ALL",
+        message: "http.fetch hosts contains '*', allowing all hosts.",
+      });
+    }
+    if (policy.allow.tools["http.fetch"].maxBytes > 5_000_000) {
+      findings.push({
+        level: "warn",
+        code: "HTTP_FETCH_MAX_BYTES_HIGH",
+        message: "http.fetch.maxBytes is very high (>5,000,000).",
+      });
+    }
+  }
+
+  if (policy.allow.tools["fs.read"].enabled) {
+    if (policy.allow.tools["fs.read"].roots.length === 0) {
+      findings.push({
+        level: "error",
+        code: "FS_READ_NO_ROOTS",
+        message: "fs.read is enabled but no allowed roots are configured.",
+      });
+    }
+    if (
+      policy.allow.tools["fs.read"].roots.some((root) => {
+        const normalized = root.trim();
+        return normalized === "." || normalized === "./" || normalized === "/";
+      })
+    ) {
+      findings.push({
+        level: "warn",
+        code: "FS_READ_ROOT_TOO_BROAD",
+        message: "fs.read roots include project/global root.",
+      });
+    }
+    if (policy.allow.tools["fs.read"].maxBytes > 5_000_000) {
+      findings.push({
+        level: "warn",
+        code: "FS_READ_MAX_BYTES_HIGH",
+        message: "fs.read.maxBytes is very high (>5,000,000).",
+      });
+    }
+  }
+
+  if (policy.allow.tools.exec.enabled) {
+    findings.push({
+      level: "warn",
+      code: "EXEC_ENABLED",
+      message: "exec is enabled; this increases local risk significantly.",
+    });
+  }
+
+  return findings;
+}
+
+export async function policyLintCLI(options: {
+  json?: boolean;
+  failOn?: "error" | "warn" | "never";
+}) {
+  try {
+    const policy = await loadPolicyFromCwd();
+    const findings = lintPolicy(policy);
+    const failOn = options.failOn ?? "error";
+    const hasError = findings.some((finding) => finding.level === "error");
+    const hasWarn = findings.some((finding) => finding.level === "warn");
+
+    let exitCode = 0;
+    if (failOn === "error" && hasError) {
+      exitCode = 1;
+    }
+    if (failOn === "warn" && (hasError || hasWarn)) {
+      exitCode = 1;
+    }
+
+    if (options.json) {
+      console.log(
+        JSON.stringify(
+          {
+            ok: exitCode === 0,
+            failOn,
+            counts: {
+              error: findings.filter((finding) => finding.level === "error").length,
+              warn: findings.filter((finding) => finding.level === "warn").length,
+            },
+            findings,
+          },
+          null,
+          2,
+        ),
+      );
+    } else {
+      if (findings.length === 0) {
+        console.log("No policy lint findings.");
+      }
+      for (const finding of findings) {
+        console.log(`${finding.level.toUpperCase()} ${finding.code}: ${finding.message}`);
+      }
+      console.log(`Policy lint completed with ${findings.length} finding(s).`);
+    }
+
+    if (exitCode !== 0) {
+      process.exitCode = exitCode;
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown policy lint error.";
+    console.error(`Policy lint failed: ${message}`);
+    process.exitCode = 2;
   }
 }
 

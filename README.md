@@ -16,6 +16,7 @@ npx sentinex init
 npx sentinex run "hello world"
 npx sentinex run "fetch https://example.com" --dry-run
 npx sentinex policy test --tool http.fetch --url https://example.com
+npx sentinex policy lint --fail-on warn --json
 npx sentinex logs show --limit 20
 npx sentinex logs show --json --type policy.decision
 npx sentinex logs show --since 2026-02-20T00:00:00Z
@@ -75,6 +76,7 @@ $env:OPENAI_API_KEY="your_key_here"
 - optional provider fallback chain (`openai -> mock`) via `llm.fallbackToMock`
 - `doctor --strict` treats warnings as failures (adds exit bit `64`)
 - `policy test --prompt` returns decision stage and matched/invalid regex details
+- `policy lint` reports static policy risks and supports `--fail-on error|warn|never`
 - `doctor` warns on overly broad tool policies (for example `hosts: ["*"]`, root-level `fs.read` scopes)
 - Dry-run mode for non-destructive execution checks
 
@@ -82,4 +84,5 @@ $env:OPENAI_API_KEY="your_key_here"
 
 ```bash
 npm test
+npm run lint:policy
 ```

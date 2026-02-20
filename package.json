@@ -9,7 +9,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node ./bin/sentinex.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint:policy": "node ./bin/sentinex.js init --force && node ./bin/sentinex.js policy lint --fail-on error"
   },
   "dependencies": {
     "commander": "^10.0.0",

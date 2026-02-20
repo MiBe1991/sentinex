@@ -24,5 +24,8 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Policy Lint
+        run: npm run lint:policy
+
       - name: Test
         run: npm test
