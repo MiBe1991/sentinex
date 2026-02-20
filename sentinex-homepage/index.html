@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sentinex | Secure Local Agent Runtime</title>
+    <meta
+      name="description"
+      content="Sentinex is a CLI-first, security-oriented local agent runtime with default-deny policy, audit logs, and controlled tool execution."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="logo" href="#">Sentinex</a>
+      <nav class="site-nav">
+        <a href="#features">Features</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#quickstart">Quickstart</a>
+      </nav>
+      <a class="btn btn-ghost" href="https://github.com/MiBe1991/sentinex" target="_blank" rel="noreferrer">GitHub</a>
+    </header>
+
+    <main>
+      <section class="hero section reveal">
+        <p class="eyebrow">Security-First Agent Runtime</p>
+        <h1>Local automation without blind trust.</h1>
+        <p class="hero-copy">
+          Sentinex is a policy-driven kernel for local AI automation. Every action is evaluated, auditable, and explicitly scoped before execution.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-solid" href="#quickstart">Start in 60 seconds</a>
+          <a class="btn btn-ghost" href="https://github.com/MiBe1991/sentinex" target="_blank" rel="noreferrer">Read the repo</a>
+        </div>
+        <ul class="stat-grid">
+          <li><strong>Default Deny</strong><span>No implicit permissions</span></li>
+          <li><strong>Audit Trail</strong><span>JSONL with rotation</span></li>
+          <li><strong>Tool Boundaries</strong><span>Host/path-level controls</span></li>
+        </ul>
+      </section>
+
+      <section id="features" class="section reveal">
+        <h2>Built for controlled execution</h2>
+        <div class="feature-grid">
+          <article class="card">
+            <h3>Policy Engine</h3>
+            <p>Deny-over-allow logic for prompts and tools, including host and path restrictions.</p>
+          </article>
+          <article class="card">
+            <h3>Approval Flow</h3>
+            <p>Interactive approval prompts or deterministic modes for CI and automation contexts.</p>
+          </article>
+          <article class="card">
+            <h3>Audit Layer</h3>
+            <p>Append-only audit events with filtering, export, and size-based rotation.</p>
+          </article>
+          <article class="card">
+            <h3>Provider Abstraction</h3>
+            <p>Use mock provider locally or OpenAI-compatible APIs with timeout/retry hardening.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="architecture" class="section reveal">
+        <h2>Architecture at a glance</h2>
+        <ol class="timeline">
+          <li><span>1</span><div><h3>Runtime</h3><p>Parses prompt, generates action plan, executes only after policy + approval gates.</p></div></li>
+          <li><span>2</span><div><h3>Policy</h3><p>Validates request against default-deny rules, scoped capabilities, and deny precedence.</p></div></li>
+          <li><span>3</span><div><h3>Tools</h3><p>`http.fetch` and `fs.read` run behind explicit constraints and typed error boundaries.</p></div></li>
+          <li><span>4</span><div><h3>Audit</h3><p>Logs run lifecycle, policy decisions, action requests/results for full traceability.</p></div></li>
+        </ol>
+      </section>
+
+      <section id="quickstart" class="section reveal">
+        <h2>Quickstart</h2>
+        <p>Clone, build, initialize, lint policy, and run your first prompt.</p>
+        <div class="code-wrap">
+          <button id="copy-quickstart" class="btn btn-ghost btn-copy" type="button">Copy</button>
+          <pre><code id="quickstart-code">git clone https://github.com/MiBe1991/sentinex.git
+cd sentinex
+npm install
+npm run build
+npx sentinex init
+npx sentinex policy lint --fail-on error
+npx sentinex run "hello world"
+npx sentinex doctor --json</code></pre>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Sentinex · Secure local agent automation</p>
+    </footer>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
