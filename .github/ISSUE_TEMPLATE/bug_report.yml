@@ -1,0 +1,40 @@
+name: Bug Report
+description: Report an unexpected behavior or regression.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction Steps
+      description: Exact commands and inputs.
+      placeholder: |
+        1. npx sentinex init
+        2. npx sentinex run "..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Sentinex Version / Commit
+      placeholder: e.g. v0.4.0 or 1a2b3c4
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Node version, shell.
