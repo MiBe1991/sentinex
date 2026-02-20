@@ -1,0 +1,40 @@
+name: Deploy Homepage
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sentinex-homepage/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: sentinex-homepage/package-lock.json
+
+      - name: Install dependencies
+        working-directory: sentinex-homepage
+        run: npm ci
+
+      - name: Build
+        working-directory: sentinex-homepage
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: sentinex-homepage/dist
+          cname: ""          # Hier eigene Domain eintragen, falls vorhanden

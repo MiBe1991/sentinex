@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sentinex | Secure Local Agent Runtime</title>
+    <meta name="description" content="Sentinex is a CLI-first, security-oriented local agent runtime with default-deny policy, audit logs, and controlled tool execution." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+
+    <!-- Ambient background -->
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-glow bg-glow--1" aria-hidden="true"></div>
+    <div class="bg-glow bg-glow--2" aria-hidden="true"></div>
+
+    <!-- NAV -->
+    <header class="site-header" id="site-header">
+      <a class="logo" href="#">
+        <span class="logo-bracket">[</span>SNX<span class="logo-bracket">]</span>
+      </a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="#features">Features</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#policy">Policy</a>
+        <a href="#quickstart">Quickstart</a>
+      </nav>
+      <a class="btn btn-outline" href="https://github.com/MiBe1991/sentinex" target="_blank" rel="noreferrer">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </header>
+
+    <main>
+      <!-- HERO -->
+      <section class="hero" aria-label="Hero">
+        <div class="hero-inner">
+          <div class="hero-content">
+            <div class="eyebrow">
+              <span class="status-dot"></span>
+              Security-First Agent Runtime
+            </div>
+            <h1 class="hero-heading">
+              Local automation.<br>
+              <span class="heading-accent">Without blind trust.</span>
+            </h1>
+            <p class="hero-sub">
+              A policy-driven kernel for local AI automation. Every action is evaluated,
+              auditable, and explicitly scoped — before execution.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#quickstart">
+                <span>Start in 60 seconds</span>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7h10M8 3l4 4-4 4"/></svg>
+              </a>
+              <a class="btn btn-outline" href="https://github.com/MiBe1991/sentinex" target="_blank" rel="noreferrer">Read the repo</a>
+            </div>
+            <ul class="trust-strip" role="list">
+              <li>
+                <span class="trust-icon">◈</span>
+                <strong>Default Deny</strong>
+                <span>No implicit permissions</span>
+              </li>
+              <li>
+                <span class="trust-icon">◈</span>
+                <strong>Audit Trail</strong>
+                <span>JSONL with rotation</span>
+              </li>
+              <li>
+                <span class="trust-icon">◈</span>
+                <strong>Tool Boundaries</strong>
+                <span>Host/path-level controls</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Animated terminal -->
+          <div class="hero-terminal" aria-hidden="true">
+            <div class="terminal-chrome">
+              <span class="dot dot--red"></span>
+              <span class="dot dot--yellow"></span>
+              <span class="dot dot--green"></span>
+              <span class="terminal-title">sentinex · policy evaluator</span>
+            </div>
+            <div class="terminal-body" id="terminal-body">
+              <div class="term-line"><span class="term-prompt">$</span> <span class="term-cmd">sentinex run "summarize recent logs"</span></div>
+              <div class="term-spacer"></div>
+              <div class="term-line term-section">▸ Runtime parsing prompt…</div>
+              <div class="term-line"><span class="term-key">action</span>  <span class="term-val">fs.read</span></div>
+              <div class="term-line"><span class="term-key">path  </span>  <span class="term-val">/var/log/app.log</span></div>
+              <div class="term-spacer"></div>
+              <div class="term-line term-section">▸ Evaluating policy…</div>
+              <div class="term-line term-eval">
+                <span class="eval-label">RULE</span> <span class="eval-text">fs.read: /var/log/**</span>
+                <span class="eval-badge eval-badge--allow">ALLOW</span>
+              </div>
+              <div class="term-line term-eval">
+                <span class="eval-label">RULE</span> <span class="eval-text">fs.write: **</span>
+                <span class="eval-badge eval-badge--deny">DENY</span>
+              </div>
+              <div class="term-line term-eval">
+                <span class="eval-label">RULE</span> <span class="eval-text">http.fetch: api.internal</span>
+                <span class="eval-badge eval-badge--allow">ALLOW</span>
+              </div>
+              <div class="term-spacer"></div>
+              <div class="term-line term-section">▸ Executing tool…</div>
+              <div class="term-line"><span class="term-key">bytes </span>  <span class="term-val">4,218</span></div>
+              <div class="term-line"><span class="term-key">lines </span>  <span class="term-val">87</span></div>
+              <div class="term-spacer"></div>
+              <div class="term-line term-section">▸ Writing audit event…</div>
+              <div class="term-line"><span class="term-key">event </span>  <span class="term-val">tool.result</span></div>
+              <div class="term-line"><span class="term-key">policy</span>  <span class="term-val eval-allow">✓ pass</span></div>
+              <div class="term-line term-done"><span class="eval-badge eval-badge--allow">✓ COMPLETE</span> <span class="term-muted">48ms</span></div>
+              <div class="term-cursor" id="terminal-cursor"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- METRICS STRIP -->
+      <section class="metrics" aria-label="Key metrics">
+        <div class="metrics-inner">
+          <div class="metric">
+            <span class="metric-value">&lt;&nbsp;50ms</span>
+            <span class="metric-label">policy evaluation</span>
+          </div>
+          <div class="metric-divider" aria-hidden="true"></div>
+          <div class="metric">
+            <span class="metric-value">100%</span>
+            <span class="metric-label">local execution</span>
+          </div>
+          <div class="metric-divider" aria-hidden="true"></div>
+          <div class="metric">
+            <span class="metric-value">0</span>
+            <span class="metric-label">implicit permissions</span>
+          </div>
+          <div class="metric-divider" aria-hidden="true"></div>
+          <div class="metric">
+            <span class="metric-value">∞</span>
+            <span class="metric-label">audit log retention</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURES -->
+      <section id="features" class="section reveal" aria-labelledby="features-heading">
+        <div class="section-label">Capabilities</div>
+        <h2 id="features-heading">Built for controlled execution.</h2>
+        <div class="feature-grid">
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2L3 6v5c0 4.418 3.134 8 7 8s7-3.582 7-8V6L10 2z"/><path d="M7 10l2 2 4-4"/></svg>
+            </div>
+            <h3>Policy Engine</h3>
+            <p>Deny-over-allow logic for prompts and tools. Define host, path, and method constraints at the kernel level — evaluated before any action fires.</p>
+            <div class="card-tag">default-deny</div>
+          </article>
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l3 3"/></svg>
+            </div>
+            <h3>Approval Flow</h3>
+            <p>Interactive prompts or deterministic pass-through for CI. Human-in-the-loop or fully automated — you decide per-context, not per-run.</p>
+            <div class="card-tag">interactive · ci-safe</div>
+          </article>
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h12M4 10h12M4 14h8"/><rect x="2" y="3" width="16" height="14" rx="2"/></svg>
+            </div>
+            <h3>Audit Layer</h3>
+            <p>Append-only JSONL audit events for every action. Filter, export, and rotate logs. Every policy decision leaves a permanent, tamper-evident trail.</p>
+            <div class="card-tag">jsonl · append-only</div>
+          </article>
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><path d="M14 11v6M11 14h6"/></svg>
+            </div>
+            <h3>Provider Abstraction</h3>
+            <p>Use the local mock provider for offline development or wire to any OpenAI-compatible API. Timeout and retry hardening built in.</p>
+            <div class="card-tag">mock · openai-compatible</div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ARCHITECTURE -->
+      <section id="architecture" class="section reveal" aria-labelledby="arch-heading">
+        <div class="section-label">Architecture</div>
+        <h2 id="arch-heading">Every request. Every time.</h2>
+        <p class="section-sub">No action executes without passing through all four gates. No exceptions. No shortcuts.</p>
+        <div class="arch-flow" role="list">
+          <div class="arch-step" role="listitem">
+            <div class="arch-num">01</div>
+            <div class="arch-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="12" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="12" width="7" height="7" rx="1.5"/><rect x="12" y="12" width="7" height="7" rx="1.5"/></svg>
+            </div>
+            <h3>Runtime</h3>
+            <p>Parses the prompt, generates an action plan, and holds execution until all downstream gates respond.</p>
+          </div>
+          <div class="arch-arrow" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M15 8l4 4-4 4"/></svg>
+          </div>
+          <div class="arch-step" role="listitem">
+            <div class="arch-num">02</div>
+            <div class="arch-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2L4 6v6c0 5 3.134 8 7 8s7-3 7-8V6L11 2z"/><path d="M8 11l2 2 4-4"/></svg>
+            </div>
+            <h3>Policy</h3>
+            <p>Validates against default-deny rules. Deny rules take full precedence. Scoped capabilities only. No ambient authority.</p>
+          </div>
+          <div class="arch-arrow" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M15 8l4 4-4 4"/></svg>
+          </div>
+          <div class="arch-step" role="listitem">
+            <div class="arch-num">03</div>
+            <div class="arch-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l10 10M6 16L16 6"/><circle cx="11" cy="11" r="8"/></svg>
+            </div>
+            <h3>Tools</h3>
+            <p><code>http.fetch</code> and <code>fs.read</code> execute behind explicit constraints. Typed error boundaries. No side-effects beyond declared scope.</p>
+          </div>
+          <div class="arch-arrow" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M15 8l4 4-4 4"/></svg>
+          </div>
+          <div class="arch-step" role="listitem">
+            <div class="arch-num">04</div>
+            <div class="arch-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h14M4 11h14M4 15h9"/><rect x="2" y="3" width="18" height="16" rx="2"/></svg>
+            </div>
+            <h3>Audit</h3>
+            <p>Logs the full run lifecycle — policy decisions, action requests, results. Append-only. Every event timestamped and structured.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- POLICY SHOWCASE -->
+      <section id="policy" class="section reveal" aria-labelledby="policy-heading">
+        <div class="section-label">Policy Engine</div>
+        <h2 id="policy-heading">Rules you write. Trust you earn.</h2>
+        <p class="section-sub">Define granular rules in YAML. Watch them evaluated in real-time against every action the agent proposes.</p>
+        <div class="policy-split">
+          <div class="policy-config">
+            <div class="panel-chrome">
+              <span class="panel-dot"></span>
+              <span class="panel-dot"></span>
+              <span class="panel-dot"></span>
+              <span class="panel-title">sentinex.policy.yaml</span>
+            </div>
+            <pre class="policy-code"><code><span class="syn-comment"># Sentinex Policy Configuration</span>
+<span class="syn-key">version</span><span class="syn-colon">:</span> <span class="syn-str">"1"</span>
+
+<span class="syn-key">default</span><span class="syn-colon">:</span>
+  <span class="syn-key">action</span><span class="syn-colon">:</span> <span class="syn-deny">deny</span>      <span class="syn-comment"># deny-first</span>
+
+<span class="syn-key">rules</span><span class="syn-colon">:</span>
+  - <span class="syn-key">tool</span><span class="syn-colon">:</span> <span class="syn-str">fs.read</span>
+    <span class="syn-key">paths</span><span class="syn-colon">:</span>
+      - <span class="syn-allow">/var/log/**</span>
+      - <span class="syn-allow">/tmp/sentinex/**</span>
+    <span class="syn-key">action</span><span class="syn-colon">:</span> <span class="syn-allow">allow</span>
+
+  - <span class="syn-key">tool</span><span class="syn-colon">:</span> <span class="syn-str">fs.write</span>
+    <span class="syn-key">action</span><span class="syn-colon">:</span> <span class="syn-deny">deny</span>
+
+  - <span class="syn-key">tool</span><span class="syn-colon">:</span> <span class="syn-str">http.fetch</span>
+    <span class="syn-key">hosts</span><span class="syn-colon">:</span>
+      - <span class="syn-allow">api.internal</span>
+    <span class="syn-key">methods</span><span class="syn-colon">:</span>
+      - <span class="syn-allow">GET</span>
+    <span class="syn-key">action</span><span class="syn-colon">:</span> <span class="syn-allow">allow</span>
+
+<span class="syn-key">audit</span><span class="syn-colon">:</span>
+  <span class="syn-key">enabled</span><span class="syn-colon">:</span> <span class="syn-allow">true</span>
+  <span class="syn-key">path</span><span class="syn-colon">:</span>   <span class="syn-str">~/.sentinex/audit.jsonl</span>
+  <span class="syn-key">rotate</span><span class="syn-colon">:</span>
+    <span class="syn-key">size</span><span class="syn-colon">:</span> <span class="syn-str">"10mb"</span></code></pre>
+          </div>
+          <div class="policy-eval">
+            <div class="panel-chrome">
+              <span class="panel-dot"></span>
+              <span class="panel-dot"></span>
+              <span class="panel-dot"></span>
+              <span class="panel-title">live evaluation</span>
+              <span class="eval-status-badge" id="eval-status">● running</span>
+            </div>
+            <div class="policy-eval-body" id="policy-eval-body">
+              <!-- Animated eval results injected by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- QUICKSTART -->
+      <section id="quickstart" class="section reveal" aria-labelledby="qs-heading">
+        <div class="section-label">Quickstart</div>
+        <h2 id="qs-heading">Zero to running in 60 seconds.</h2>
+        <p class="section-sub">Clone, build, initialize, and fire your first prompt. The policy linter catches misconfigurations before they run.</p>
+        <div class="code-wrap">
+          <div class="code-chrome">
+            <span class="panel-dot"></span>
+            <span class="panel-dot"></span>
+            <span class="panel-dot"></span>
+            <span class="code-chrome-title">terminal</span>
+            <button id="copy-quickstart" class="btn-copy" type="button" aria-label="Copy quickstart commands">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/><path d="M2 10V2h8"/></svg>
+              <span id="copy-label">Copy</span>
+            </button>
+          </div>
+          <pre><code id="quickstart-code"><span class="sh-comment"># 1. Clone the repository</span>
+<span class="sh-cmd">git</span> clone https://github.com/MiBe1991/sentinex.git
+<span class="sh-cmd">cd</span> sentinex
+
+<span class="sh-comment"># 2. Install &amp; build</span>
+<span class="sh-cmd">npm</span> install
+<span class="sh-cmd">npm</span> run build
+
+<span class="sh-comment"># 3. Initialize configuration</span>
+<span class="sh-cmd">npx</span> sentinex init
+
+<span class="sh-comment"># 4. Lint your policy (catches errors before runtime)</span>
+<span class="sh-cmd">npx</span> sentinex policy lint --fail-on error
+
+<span class="sh-comment"># 5. Run your first prompt</span>
+<span class="sh-cmd">npx</span> sentinex run <span class="sh-str">"hello world"</span>
+
+<span class="sh-comment"># 6. Check system health</span>
+<span class="sh-cmd">npx</span> sentinex doctor --json</code></pre>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="logo">
+            <span class="logo-bracket">[</span>SNX<span class="logo-bracket">]</span>
+          </span>
+          <span class="footer-tagline">Secure local agent automation</span>
+        </div>
+        <nav class="footer-nav" aria-label="Footer navigation">
+          <a href="#features">Features</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#quickstart">Quickstart</a>
+          <a href="https://github.com/MiBe1991/sentinex" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+        <div class="footer-copy">
+          <span>Built with trust, not assumption.</span>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

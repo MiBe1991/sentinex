@@ -72,6 +72,7 @@ npm run test:coverage
 - Security policy: `SECURITY.md`
 - Code of conduct: `CODE_OF_CONDUCT.md`
 - License: `LICENSE`
+- Changelog: `CHANGELOG.md`
 
 ## Vision
 Sentinex aims to become an open-source reference kernel for secure local agent automation.
