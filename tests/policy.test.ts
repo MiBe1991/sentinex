@@ -35,6 +35,7 @@ describe("policy", () => {
       allow: {
         tools: {
           "http.fetch": {
+            enabled: true,
             hosts: ["example.com"],
           },
         },
@@ -57,6 +58,7 @@ describe("policy", () => {
       allow: {
         tools: {
           "fs.read": {
+            enabled: true,
             roots: [relativeAllowedRoot],
           },
         },
@@ -66,5 +68,23 @@ describe("policy", () => {
     const allowedPath = path.relative(process.cwd(), path.join(allowedRoot, "data.txt"));
     expect(evaluateFsRead({ path: allowedPath }, policy).allowed).toBe(true);
     expect(evaluateFsRead({ path: "README.md" }, policy).allowed).toBe(false);
+  });
+
+  it("supports wildcard host matching for http.fetch", () => {
+    const policy = validatePolicy({
+      version: 1,
+      default: "deny",
+      allow: {
+        tools: {
+          "http.fetch": {
+            enabled: true,
+            hosts: ["*.example.com"],
+          },
+        },
+      },
+    });
+
+    expect(evaluateHttpFetch({ url: "https://api.example.com" }, policy).allowed).toBe(true);
+    expect(evaluateHttpFetch({ url: "https://example.com" }, policy).allowed).toBe(false);
   });
 });

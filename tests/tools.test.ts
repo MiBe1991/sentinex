@@ -24,6 +24,7 @@ describe("tools", () => {
       allow: {
         tools: {
           "fs.read": {
+            enabled: true,
             roots: [path.relative(process.cwd(), allowedRoot)],
             maxBytes: 3,
           },
@@ -43,6 +44,7 @@ describe("tools", () => {
       allow: {
         tools: {
           "http.fetch": {
+            enabled: true,
             hosts: ["example.com"],
             maxBytes: 4,
             timeoutMs: 1000,

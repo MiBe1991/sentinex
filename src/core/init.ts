@@ -10,11 +10,13 @@ allow:
     - ".*"
   tools:
     http.fetch:
+      enabled: true
       hosts:
         - "example.com"
       timeoutMs: 5000
       maxBytes: 64000
     fs.read:
+      enabled: true
       roots:
         - "./templates"
       maxBytes: 64000

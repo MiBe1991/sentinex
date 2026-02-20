@@ -49,6 +49,8 @@ $env:OPENAI_API_KEY="your_key_here"
 
 - Default-deny policy evaluator with YAML schema validation
 - Tool capabilities: `http.fetch` (GET only, host whitelist), `fs.read` (scoped roots, max size)
+- Tool policy switches: `allow.tools.http.fetch.enabled` / `allow.tools.fs.read.enabled`
+- Host allowlist supports exact hosts and wildcard subdomains (example: `*.example.com`)
 - Interactive approval workflow (`prompt`, `auto-approve`, `auto-deny`)
 - JSONL audit logging (`run.started`, `action.requested`, `policy.decision`, `action.result`, `run.finished`)
 - Action model + registry + typed errors

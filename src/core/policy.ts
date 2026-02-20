@@ -6,12 +6,14 @@ import type { FsReadInput, HttpFetchInput, ToolName } from "./actions.js";
 export type PolicyDefault = "allow" | "deny";
 
 export type ToolPolicyHttpFetch = {
+  enabled: boolean;
   hosts: string[];
   timeoutMs: number;
   maxBytes: number;
 };
 
 export type ToolPolicyFsRead = {
+  enabled: boolean;
   roots: string[];
   maxBytes: number;
 };
@@ -44,8 +46,8 @@ const DEFAULT_POLICY: PolicyConfig = {
   allow: {
     prompts: [],
     tools: {
-      "http.fetch": { hosts: [], timeoutMs: 5000, maxBytes: 64_000 },
-      "fs.read": { roots: [], maxBytes: 64_000 },
+      "http.fetch": { enabled: false, hosts: [], timeoutMs: 5000, maxBytes: 64_000 },
+      "fs.read": { enabled: false, roots: [], maxBytes: 64_000 },
       exec: { enabled: false },
     },
   },
@@ -118,11 +120,13 @@ export function validatePolicy(raw: unknown): PolicyConfig {
       prompts: asStringArray(allowRoot.prompts, "allow.prompts"),
       tools: {
         "http.fetch": {
+          enabled: asBoolean(httpRoot.enabled, false, "allow.tools.http.fetch.enabled"),
           hosts: asStringArray(httpRoot.hosts, "allow.tools.http.fetch.hosts"),
           timeoutMs: asNumber(httpRoot.timeoutMs, 5000, "allow.tools.http.fetch.timeoutMs"),
           maxBytes: asNumber(httpRoot.maxBytes, 64_000, "allow.tools.http.fetch.maxBytes"),
         },
         "fs.read": {
+          enabled: asBoolean(fsRoot.enabled, false, "allow.tools.fs.read.enabled"),
           roots: asStringArray(fsRoot.roots, "allow.tools.fs.read.roots"),
           maxBytes: asNumber(fsRoot.maxBytes, 64_000, "allow.tools.fs.read.maxBytes"),
         },
@@ -169,6 +173,10 @@ export function evaluateHttpFetch(
   input: HttpFetchInput,
   policy: PolicyConfig,
 ): PolicyDecision {
+  if (!policy.allow.tools["http.fetch"].enabled) {
+    return { allowed: false, reason: "http.fetch is disabled by policy." };
+  }
+
   let hostname = "";
   try {
     const parsed = new URL(input.url);
@@ -177,10 +185,16 @@ export function evaluateHttpFetch(
     return { allowed: false, reason: "Invalid URL." };
   }
 
-  const allowedHosts = policy.allow.tools["http.fetch"].hosts.map((host) =>
-    host.toLowerCase().trim(),
-  );
-  if (!allowedHosts.includes(hostname)) {
+  const allowedHosts = policy.allow.tools["http.fetch"].hosts.map((host) => host.toLowerCase().trim());
+  const isAllowed = allowedHosts.some((allowed) => {
+    if (allowed.startsWith("*.")) {
+      const suffix = allowed.slice(1);
+      return hostname.endsWith(suffix) && hostname !== suffix.slice(1);
+    }
+    return hostname === allowed;
+  });
+
+  if (!isAllowed) {
     return {
       allowed: false,
       reason: `Host '${hostname}' is not in allow list.`,
@@ -191,6 +205,10 @@ export function evaluateHttpFetch(
 }
 
 export function evaluateFsRead(input: FsReadInput, policy: PolicyConfig): PolicyDecision {
+  if (!policy.allow.tools["fs.read"].enabled) {
+    return { allowed: false, reason: "fs.read is disabled by policy." };
+  }
+
   const allowedRoots = policy.allow.tools["fs.read"].roots;
   if (allowedRoots.length === 0) {
     return { allowed: false, reason: "No fs.read roots configured." };
