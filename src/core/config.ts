@@ -16,6 +16,7 @@ export type RuntimeConfig = {
   };
   llm: {
     provider: LlmProviderName;
+    fallbackToMock: boolean;
     model: string;
     baseUrl: string;
     apiKeyEnv: string;
@@ -38,6 +39,7 @@ const DEFAULT_CONFIG: RuntimeConfig = {
   },
   llm: {
     provider: "mock",
+    fallbackToMock: false,
     model: "gpt-4.1-mini",
     baseUrl: "https://api.openai.com/v1",
     apiKeyEnv: "OPENAI_API_KEY",
@@ -138,6 +140,11 @@ export function validateConfig(raw: unknown): RuntimeConfig {
     },
     llm: {
       provider: (provider as LlmProviderName | undefined) ?? DEFAULT_CONFIG.llm.provider,
+      fallbackToMock: asBoolean(
+        llmRoot.fallbackToMock,
+        DEFAULT_CONFIG.llm.fallbackToMock,
+        "llm.fallbackToMock",
+      ),
       model: asString(llmRoot.model, DEFAULT_CONFIG.llm.model, "llm.model"),
       baseUrl: asString(llmRoot.baseUrl, DEFAULT_CONFIG.llm.baseUrl, "llm.baseUrl"),
       apiKeyEnv: asString(llmRoot.apiKeyEnv, DEFAULT_CONFIG.llm.apiKeyEnv, "llm.apiKeyEnv"),

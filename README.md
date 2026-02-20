@@ -18,7 +18,8 @@ npx sentinex run "fetch https://example.com" --dry-run
 npx sentinex policy test --tool http.fetch --url https://example.com
 npx sentinex logs show --limit 20
 npx sentinex logs show --json --type policy.decision
-npx sentinex doctor
+npx sentinex logs show --since 2026-02-20T00:00:00Z
+npx sentinex doctor --json
 ```
 
 `sentinex init` creates `.sentinex/policy.yaml` and `.sentinex/config.yaml` in the current folder.
@@ -31,6 +32,7 @@ Set provider in `.sentinex/config.yaml`:
 ```yaml
 llm:
   provider: "openai"
+  fallbackToMock: true
   model: "gpt-4.1-mini"
   baseUrl: "https://api.openai.com/v1"
   apiKeyEnv: "OPENAI_API_KEY"
@@ -59,6 +61,9 @@ $env:OPENAI_API_KEY="your_key_here"
 - OpenAI request hardening: timeout, retry with backoff for retryable status/network errors
 - `logs show` filters (`--run-id`, `--type`) and JSON output (`--json`)
 - `doctor` command for quick runtime health checks
+- `doctor --json` with category-based exit codes
+- `logs show --since <isoDate>` time filtering
+- optional provider fallback chain (`openai -> mock`) via `llm.fallbackToMock`
 - Dry-run mode for non-destructive execution checks
 
 ## Testing

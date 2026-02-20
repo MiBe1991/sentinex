@@ -12,6 +12,29 @@ type AuditEventLine = {
   [key: string]: unknown;
 };
 
+type DoctorCheckName =
+  | "config.load"
+  | "policy.load"
+  | "audit.path"
+  | "llm.apiKey"
+  | "llm.provider"
+  | "doctor.runtime";
+
+type DoctorCheck = {
+  name: DoctorCheckName;
+  ok: boolean;
+  detail: string;
+};
+
+const DOCTOR_EXIT_CODES: Record<DoctorCheckName, number> = {
+  "config.load": 2,
+  "policy.load": 4,
+  "audit.path": 8,
+  "llm.apiKey": 16,
+  "llm.provider": 0,
+  "doctor.runtime": 32,
+};
+
 function parseAuditLines(raw: string): AuditEventLine[] {
   const lines = raw
     .split("\n")
@@ -88,6 +111,7 @@ export async function logsShowCLI(options: {
   json?: boolean;
   runId?: string;
   type?: string;
+  since?: string;
 }) {
   try {
     const config = await loadConfigFromCwd();
@@ -108,6 +132,19 @@ export async function logsShowCLI(options: {
     if (options.type) {
       events = events.filter((event) => event.type === options.type);
     }
+    if (options.since) {
+      const sinceMs = Date.parse(options.since);
+      if (Number.isNaN(sinceMs)) {
+        throw new Error(`Invalid --since date: ${options.since}`);
+      }
+      events = events.filter((event) => {
+        if (!event.timestamp || typeof event.timestamp !== "string") {
+          return false;
+        }
+        const eventMs = Date.parse(event.timestamp);
+        return !Number.isNaN(eventMs) && eventMs >= sinceMs;
+      });
+    }
 
     const limit = options.limit && options.limit > 0 ? options.limit : 20;
     const selected = events.slice(-limit);
@@ -126,8 +163,8 @@ export async function logsShowCLI(options: {
   }
 }
 
-export async function doctorCLI() {
-  const checks: Array<{ name: string; ok: boolean; detail: string }> = [];
+export async function doctorCLI(options: { json?: boolean } = {}) {
+  const checks: DoctorCheck[] = [];
   try {
     const config = await loadConfigFromCwd();
     checks.push({ name: "config.load", ok: true, detail: "config.yaml is valid" });
@@ -171,15 +208,34 @@ export async function doctorCLI() {
     });
   }
 
-  let hasFailure = false;
+  let exitCode = 0;
+  const failedChecks: DoctorCheck[] = [];
   for (const check of checks) {
     if (!check.ok) {
-      hasFailure = true;
+      failedChecks.push(check);
+      exitCode |= DOCTOR_EXIT_CODES[check.name];
     }
-    console.log(`${check.ok ? "OK" : "FAIL"} ${check.name}: ${check.detail}`);
   }
 
-  if (hasFailure) {
-    process.exitCode = 1;
+  if (options.json) {
+    console.log(
+      JSON.stringify(
+        {
+          ok: failedChecks.length === 0,
+          exitCode,
+          checks,
+        },
+        null,
+        2,
+      ),
+    );
+  } else {
+    for (const check of checks) {
+      console.log(`${check.ok ? "OK" : "FAIL"} ${check.name}: ${check.detail}`);
+    }
+  }
+
+  if (exitCode !== 0) {
+    process.exitCode = exitCode;
   }
 }

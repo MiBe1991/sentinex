@@ -32,6 +32,7 @@ approval:
   mode: "prompt"
 llm:
   provider: "mock"
+  fallbackToMock: false
   model: "gpt-4.1-mini"
   baseUrl: "https://api.openai.com/v1"
   apiKeyEnv: "OPENAI_API_KEY"

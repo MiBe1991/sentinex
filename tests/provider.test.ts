@@ -31,6 +31,23 @@ describe("provider factory", () => {
     const provider = createProvider(config);
     expect(provider.name).toBe("openai");
   });
+
+  it("falls back from openai to mock when configured", async () => {
+    delete process.env.OPENAI_API_KEY;
+    const config = validateConfig({
+      version: 1,
+      llm: {
+        provider: "openai",
+        fallbackToMock: true,
+      },
+    });
+    const provider = createProvider(config);
+    const plan = (await provider.generate({ prompt: "hello fallback" })) as {
+      actions: Array<{ type: string; text?: string }>;
+    };
+    expect(provider.name).toBe("openai->mock");
+    expect(plan.actions[0]?.type).toBe("respond");
+  });
 });
 
 describe("OpenAIProvider", () => {

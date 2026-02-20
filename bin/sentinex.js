@@ -65,6 +65,7 @@ logs
   .option("--json", "Output full JSON events")
   .option("--run-id <id>", "Filter by run ID")
   .option("--type <name>", "Filter by event type")
+  .option("--since <isoDate>", "Filter events since ISO timestamp")
   .action(async (options) => {
     const parsed = Number.parseInt(options.limit, 10);
     await logsShowCLI({
@@ -72,14 +73,16 @@ logs
       json: Boolean(options.json),
       runId: options.runId,
       type: options.type,
+      since: options.since,
     });
   });
 
 program
   .command("doctor")
   .description("Check runtime configuration, policy, and provider prerequisites")
-  .action(async () => {
-    await doctorCLI();
+  .option("--json", "Output checks as JSON")
+  .action(async (options) => {
+    await doctorCLI({ json: Boolean(options.json) });
   });
 
 program.parse(process.argv);
