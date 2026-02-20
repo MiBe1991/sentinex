@@ -2,7 +2,12 @@ import { access, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { executePrompt } from "./core/agent.js";
 import { loadConfigFromCwd } from "./core/config.js";
-import { loadPolicyFromCwd, evaluatePrompt, evaluateTool } from "./core/policy.js";
+import {
+  loadPolicyFromCwd,
+  evaluatePrompt,
+  evaluatePromptDetailed,
+  evaluateTool,
+} from "./core/policy.js";
 import { AuditLogger } from "./core/audit.js";
 
 type AuditEventLine = {
@@ -37,7 +42,7 @@ const DOCTOR_EXIT_CODES: Record<DoctorCheckName, number> = {
 };
 const DOCTOR_STRICT_WARNING_EXIT_CODE = 64;
 
-function parseAuditLines(raw: string): AuditEventLine[] {
+export function parseAuditLines(raw: string): AuditEventLine[] {
   const lines = raw
     .split("\n")
     .map((line) => line.trim())
@@ -53,9 +58,9 @@ function parseAuditLines(raw: string): AuditEventLine[] {
     .filter((event) => typeof event === "object");
 }
 
-function filterAuditEvents(
+export function filterAuditEvents(
   events: AuditEventLine[],
-  options: { runId?: string; type?: string; since?: string },
+  options: { runId?: string; type?: string; since?: string; until?: string },
 ): AuditEventLine[] {
   let filtered = events;
   if (options.runId) {
@@ -75,6 +80,19 @@ function filterAuditEvents(
       }
       const eventMs = Date.parse(event.timestamp);
       return !Number.isNaN(eventMs) && eventMs >= sinceMs;
+    });
+  }
+  if (options.until) {
+    const untilMs = Date.parse(options.until);
+    if (Number.isNaN(untilMs)) {
+      throw new Error(`Invalid --until date: ${options.until}`);
+    }
+    filtered = filtered.filter((event) => {
+      if (!event.timestamp || typeof event.timestamp !== "string") {
+        return false;
+      }
+      const eventMs = Date.parse(event.timestamp);
+      return !Number.isNaN(eventMs) && eventMs <= untilMs;
     });
   }
   return filtered;
@@ -105,8 +123,20 @@ export async function policyTestCLI(options: {
     const policy = await loadPolicyFromCwd();
 
     if (options.prompt) {
-      const decision = evaluatePrompt(options.prompt, policy);
-      console.log(JSON.stringify({ target: "prompt", ...decision }, null, 2));
+      const details = evaluatePromptDetailed(options.prompt, policy);
+      console.log(
+        JSON.stringify(
+          {
+            target: "prompt",
+            ...details.decision,
+            stage: details.stage,
+            matchedPattern: details.matchedPattern,
+            invalidPattern: details.invalidPattern,
+          },
+          null,
+          2,
+        ),
+      );
       return;
     }
 
@@ -141,6 +171,7 @@ export async function logsShowCLI(options: {
   runId?: string;
   type?: string;
   since?: string;
+  until?: string;
 }) {
   try {
     const config = await loadConfigFromCwd();
@@ -180,6 +211,7 @@ export async function logsExportCLI(options: {
   runId?: string;
   type?: string;
   since?: string;
+  until?: string;
 }) {
   try {
     const config = await loadConfigFromCwd();
@@ -221,6 +253,47 @@ export async function doctorCLI(options: { json?: boolean; strict?: boolean } = 
         name: "policy.load",
         ok: true,
         detail: "allow.prompts contains '.*' (very broad allow rule)",
+        level: "warning",
+      });
+    }
+    if (
+      policy.allow.tools["http.fetch"].enabled &&
+      policy.allow.tools["http.fetch"].hosts.some((host) => host.trim() === "*")
+    ) {
+      checks.push({
+        name: "policy.load",
+        ok: true,
+        detail: "http.fetch host allowlist contains '*' (overly broad)",
+        level: "warning",
+      });
+    }
+    if (
+      policy.allow.tools["fs.read"].enabled &&
+      policy.allow.tools["fs.read"].roots.some((root) => {
+        const normalized = root.trim();
+        return normalized === "." || normalized === "./" || normalized === "/";
+      })
+    ) {
+      checks.push({
+        name: "policy.load",
+        ok: true,
+        detail: "fs.read roots include project/global root (overly broad)",
+        level: "warning",
+      });
+    }
+    if (policy.allow.tools["http.fetch"].maxBytes > 5_000_000) {
+      checks.push({
+        name: "policy.load",
+        ok: true,
+        detail: "http.fetch.maxBytes is very high (>5,000,000)",
+        level: "warning",
+      });
+    }
+    if (policy.allow.tools["fs.read"].maxBytes > 5_000_000) {
+      checks.push({
+        name: "policy.load",
+        ok: true,
+        detail: "fs.read.maxBytes is very high (>5,000,000)",
         level: "warning",
       });
     }
@@ -288,10 +361,10 @@ export async function doctorCLI(options: { json?: boolean; strict?: boolean } = 
     console.log(
       JSON.stringify(
         {
-          ok: failedChecks.length === 0,
-          strict: Boolean(options.strict),
-          exitCode,
-          checks,
+            ok: failedChecks.length === 0 && (!options.strict || warningChecks.length === 0),
+            strict: Boolean(options.strict),
+            exitCode,
+            checks,
         },
         null,
         2,

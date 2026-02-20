@@ -5,6 +5,7 @@ import {
   evaluateFsRead,
   evaluateHttpFetch,
   evaluatePrompt,
+  evaluatePromptDetailed,
   validatePolicy,
 } from "../src/core/policy.js";
 
@@ -47,6 +48,27 @@ describe("policy", () => {
     const decision = evaluatePrompt("show secret data", policy);
     expect(decision.allowed).toBe(false);
     expect(decision.reason).toContain("deny");
+  });
+
+  it("returns prompt evaluation details", () => {
+    const policy = validatePolicy({
+      version: 1,
+      default: "deny",
+      deny: {
+        prompts: ["^blocked"],
+      },
+      allow: {
+        prompts: ["^hello"],
+      },
+    });
+
+    const denyDetails = evaluatePromptDetailed("blocked request", policy);
+    expect(denyDetails.stage).toBe("deny");
+    expect(denyDetails.matchedPattern).toBe("^blocked");
+
+    const allowDetails = evaluatePromptDetailed("hello world", policy);
+    expect(allowDetails.stage).toBe("allow");
+    expect(allowDetails.matchedPattern).toBe("^hello");
   });
 
   it("checks http.fetch host allowlist", () => {

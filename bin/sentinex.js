@@ -66,6 +66,7 @@ logs
   .option("--run-id <id>", "Filter by run ID")
   .option("--type <name>", "Filter by event type")
   .option("--since <isoDate>", "Filter events since ISO timestamp")
+  .option("--until <isoDate>", "Filter events until ISO timestamp")
   .action(async (options) => {
     const parsed = Number.parseInt(options.limit, 10);
     await logsShowCLI({
@@ -74,6 +75,7 @@ logs
       runId: options.runId,
       type: options.type,
       since: options.since,
+      until: options.until,
     });
   });
 
@@ -85,6 +87,7 @@ logs
   .option("--run-id <id>", "Filter by run ID")
   .option("--type <name>", "Filter by event type")
   .option("--since <isoDate>", "Filter events since ISO timestamp")
+  .option("--until <isoDate>", "Filter events until ISO timestamp")
   .action(async (options) => {
     const format = options.format === "jsonl" ? "jsonl" : "json";
     await logsExportCLI({
@@ -93,6 +96,7 @@ logs
       runId: options.runId,
       type: options.type,
       since: options.since,
+      until: options.until,
     });
   });
 

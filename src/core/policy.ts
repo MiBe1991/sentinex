@@ -43,6 +43,13 @@ export type PolicyDecision = {
   reason: string;
 };
 
+export type PromptEvaluationDetails = {
+  decision: PolicyDecision;
+  stage: "deny" | "allow" | "default";
+  matchedPattern?: string;
+  invalidPattern?: string;
+};
+
 const DEFAULT_POLICY: PolicyConfig = {
   version: 1,
   default: "deny",
@@ -161,15 +168,26 @@ export async function loadPolicyFromCwd(): Promise<PolicyConfig> {
   return validatePolicy(parsed);
 }
 
-export function evaluatePrompt(prompt: string, policy: PolicyConfig): PolicyDecision {
+export function evaluatePromptDetailed(
+  prompt: string,
+  policy: PolicyConfig,
+): PromptEvaluationDetails {
   for (const pattern of policy.deny.prompts) {
     try {
       const regex = new RegExp(pattern);
       if (regex.test(prompt)) {
-        return { allowed: false, reason: `Matched prompt deny pattern '${pattern}'.` };
+        return {
+          decision: { allowed: false, reason: `Matched prompt deny pattern '${pattern}'.` },
+          stage: "deny",
+          matchedPattern: pattern,
+        };
       }
     } catch {
-      return { allowed: false, reason: `Invalid regex in deny.prompts: '${pattern}'.` };
+      return {
+        decision: { allowed: false, reason: `Invalid regex in deny.prompts: '${pattern}'.` },
+        stage: "deny",
+        invalidPattern: pattern,
+      };
     }
   }
 
@@ -177,17 +195,35 @@ export function evaluatePrompt(prompt: string, policy: PolicyConfig): PolicyDeci
     try {
       const regex = new RegExp(pattern);
       if (regex.test(prompt)) {
-        return { allowed: true, reason: `Matched prompt allow pattern '${pattern}'.` };
+        return {
+          decision: { allowed: true, reason: `Matched prompt allow pattern '${pattern}'.` },
+          stage: "allow",
+          matchedPattern: pattern,
+        };
       }
     } catch {
-      return { allowed: false, reason: `Invalid regex in allow.prompts: '${pattern}'.` };
+      return {
+        decision: { allowed: false, reason: `Invalid regex in allow.prompts: '${pattern}'.` },
+        stage: "allow",
+        invalidPattern: pattern,
+      };
     }
   }
 
   if (policy.default === "allow") {
-    return { allowed: true, reason: "No match, but policy default is allow." };
+    return {
+      decision: { allowed: true, reason: "No match, but policy default is allow." },
+      stage: "default",
+    };
   }
-  return { allowed: false, reason: "No allow pattern matched and default is deny." };
+  return {
+    decision: { allowed: false, reason: "No allow pattern matched and default is deny." },
+    stage: "default",
+  };
+}
+
+export function evaluatePrompt(prompt: string, policy: PolicyConfig): PolicyDecision {
+  return evaluatePromptDetailed(prompt, policy).decision;
 }
 
 export function evaluateHttpFetch(
