@@ -1,7 +1,7 @@
 import { access, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { executePrompt } from "./core/agent.js";
-import { loadConfigFromCwd } from "./core/config.js";
+import { loadConfigFromCwd, type RuntimeConfig } from "./core/config.js";
 import {
   loadPolicyFromCwd,
   evaluatePrompt,
@@ -98,6 +98,27 @@ export function filterAuditEvents(
   return filtered;
 }
 
+export async function readAuditEvents(config: RuntimeConfig): Promise<AuditEventLine[]> {
+  const basePath = path.resolve(process.cwd(), config.audit.file);
+  const candidates: string[] = [];
+  for (let index = config.audit.maxFiles; index >= 1; index -= 1) {
+    candidates.push(`${basePath}.${index}`);
+  }
+  candidates.push(basePath);
+
+  const events: AuditEventLine[] = [];
+  for (const filePath of candidates) {
+    try {
+      await access(filePath);
+    } catch {
+      continue;
+    }
+    const raw = await readFile(filePath, "utf8");
+    events.push(...parseAuditLines(raw));
+  }
+  return events;
+}
+
 export async function runCLI(prompt: string, options: { dryRun?: boolean } = {}) {
   console.log(`>>> Prompt: ${prompt}`);
 
@@ -175,17 +196,12 @@ export async function logsShowCLI(options: {
 }) {
   try {
     const config = await loadConfigFromCwd();
-    const filePath = path.resolve(process.cwd(), config.audit.file);
-
-    try {
-      await access(filePath);
-    } catch {
+    let events = await readAuditEvents(config);
+    if (events.length === 0) {
+      const filePath = path.resolve(process.cwd(), config.audit.file);
       console.log(`No audit log found at ${filePath}`);
       return;
     }
-
-    const raw = await readFile(filePath, "utf8");
-    let events = parseAuditLines(raw);
     events = filterAuditEvents(events, options);
 
     const limit = options.limit && options.limit > 0 ? options.limit : 20;
@@ -215,9 +231,12 @@ export async function logsExportCLI(options: {
 }) {
   try {
     const config = await loadConfigFromCwd();
-    const auditPath = path.resolve(process.cwd(), config.audit.file);
-    const raw = await readFile(auditPath, "utf8");
-    let events = parseAuditLines(raw);
+    let events = await readAuditEvents(config);
+    if (events.length === 0) {
+      const auditPath = path.resolve(process.cwd(), config.audit.file);
+      console.log(`No audit log found at ${auditPath}`);
+      return;
+    }
     events = filterAuditEvents(events, options);
 
     const outputPath = path.resolve(process.cwd(), options.output);

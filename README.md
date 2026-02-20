@@ -71,6 +71,7 @@ $env:OPENAI_API_KEY="your_key_here"
 - `logs show --since <isoDate>` time filtering
 - `logs show/export --until <isoDate>` upper time bound filtering
 - `logs export` for filtered JSON/JSONL export files
+- `logs show/export` reads rotated audit files (`audit.jsonl`, `.1`, `.2`, ...)
 - optional provider fallback chain (`openai -> mock`) via `llm.fallbackToMock`
 - `doctor --strict` treats warnings as failures (adds exit bit `64`)
 - `policy test --prompt` returns decision stage and matched/invalid regex details
