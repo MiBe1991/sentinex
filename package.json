@@ -10,6 +10,7 @@
     "build": "tsc",
     "start": "node ./bin/sentinex.js",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint:policy": "node ./bin/sentinex.js init --force && node ./bin/sentinex.js policy lint --fail-on error"
   },
   "dependencies": {
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^2.1.8",
     "typescript": "^5.2.0",
     "vitest": "^2.1.8"
   }

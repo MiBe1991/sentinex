@@ -85,4 +85,5 @@ $env:OPENAI_API_KEY="your_key_here"
 ```bash
 npm test
 npm run lint:policy
+npm run test:coverage
 ```

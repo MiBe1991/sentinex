@@ -4,6 +4,7 @@ node_modules/
 .tmp-tool-tests/
 .tmp-audit-tests/
 .tmp-cli-logs-tests/
+coverage/
 bin/cli.js
 bin/core/
 *.tsbuildinfo
