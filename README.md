@@ -2,6 +2,8 @@
 
 Sentinex is a CLI-first, security-oriented local agent runtime with default-deny policy enforcement, controlled tool execution, and auditable runs.
 
+Live homepage: **https://mibe1991.github.io/sentinex/**
+
 ## Why Sentinex
 Modern agent automation needs explicit guardrails. Sentinex is built around security-by-design:
 - Default deny policy model

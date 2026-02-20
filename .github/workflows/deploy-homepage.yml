@@ -37,4 +37,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: sentinex-homepage/dist
-          cname: ""          # Hier eigene Domain eintragen, falls vorhanden
