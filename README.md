@@ -19,7 +19,9 @@ npx sentinex policy test --tool http.fetch --url https://example.com
 npx sentinex logs show --limit 20
 npx sentinex logs show --json --type policy.decision
 npx sentinex logs show --since 2026-02-20T00:00:00Z
+npx sentinex logs export --output out/audit.json --format json --since 2026-02-20T00:00:00Z
 npx sentinex doctor --json
+npx sentinex doctor --strict
 ```
 
 `sentinex init` creates `.sentinex/policy.yaml` and `.sentinex/config.yaml` in the current folder.
@@ -53,6 +55,7 @@ $env:OPENAI_API_KEY="your_key_here"
 - Tool capabilities: `http.fetch` (GET only, host whitelist), `fs.read` (scoped roots, max size)
 - Tool policy switches: `allow.tools.http.fetch.enabled` / `allow.tools.fs.read.enabled`
 - Host allowlist supports exact hosts and wildcard subdomains (example: `*.example.com`)
+- Prompt deny rules with priority over allow (`deny.prompts`)
 - Interactive approval workflow (`prompt`, `auto-approve`, `auto-deny`)
 - JSONL audit logging (`run.started`, `action.requested`, `policy.decision`, `action.result`, `run.finished`)
 - Action model + registry + typed errors
@@ -63,7 +66,9 @@ $env:OPENAI_API_KEY="your_key_here"
 - `doctor` command for quick runtime health checks
 - `doctor --json` with category-based exit codes
 - `logs show --since <isoDate>` time filtering
+- `logs export` for filtered JSON/JSONL export files
 - optional provider fallback chain (`openai -> mock`) via `llm.fallbackToMock`
+- `doctor --strict` treats warnings as failures (adds exit bit `64`)
 - Dry-run mode for non-destructive execution checks
 
 ## Testing

@@ -19,6 +19,9 @@ describe("policy", () => {
     const policy = validatePolicy({
       version: 1,
       default: "deny",
+      deny: {
+        prompts: ["forbidden"],
+      },
       allow: {
         prompts: ["^hello"],
       },
@@ -26,6 +29,24 @@ describe("policy", () => {
 
     expect(evaluatePrompt("hello world", policy).allowed).toBe(true);
     expect(evaluatePrompt("bye", policy).allowed).toBe(false);
+    expect(evaluatePrompt("this is forbidden", policy).allowed).toBe(false);
+  });
+
+  it("prioritizes deny over allow patterns", () => {
+    const policy = validatePolicy({
+      version: 1,
+      default: "deny",
+      deny: {
+        prompts: [".*secret.*"],
+      },
+      allow: {
+        prompts: [".*"],
+      },
+    });
+
+    const decision = evaluatePrompt("show secret data", policy);
+    expect(decision.allowed).toBe(false);
+    expect(decision.reason).toContain("deny");
   });
 
   it("checks http.fetch host allowlist", () => {

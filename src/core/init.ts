@@ -5,6 +5,9 @@ import { fileURLToPath } from "node:url";
 const DEFAULT_POLICY_TEMPLATE = `version: 1
 default: deny
 
+deny:
+  prompts: []
+
 allow:
   prompts:
     - ".*"

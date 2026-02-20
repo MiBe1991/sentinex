@@ -25,6 +25,9 @@ export type ToolPolicyExec = {
 export type PolicyConfig = {
   version: number;
   default: PolicyDefault;
+  deny: {
+    prompts: string[];
+  };
   allow: {
     prompts: string[];
     tools: {
@@ -43,6 +46,9 @@ export type PolicyDecision = {
 const DEFAULT_POLICY: PolicyConfig = {
   version: 1,
   default: "deny",
+  deny: {
+    prompts: [],
+  },
   allow: {
     prompts: [],
     tools: {
@@ -106,6 +112,7 @@ export function validatePolicy(raw: unknown): PolicyConfig {
   }
 
   const allowRoot = obj.allow === undefined ? {} : asRecord(obj.allow);
+  const denyRoot = obj.deny === undefined ? {} : asRecord(obj.deny);
   const toolsRoot = allowRoot.tools === undefined ? {} : asRecord(allowRoot.tools);
 
   const httpRoot =
@@ -116,6 +123,9 @@ export function validatePolicy(raw: unknown): PolicyConfig {
   return {
     version: 1,
     default: obj.default,
+    deny: {
+      prompts: asStringArray(denyRoot.prompts, "deny.prompts"),
+    },
     allow: {
       prompts: asStringArray(allowRoot.prompts, "allow.prompts"),
       tools: {
@@ -152,6 +162,17 @@ export async function loadPolicyFromCwd(): Promise<PolicyConfig> {
 }
 
 export function evaluatePrompt(prompt: string, policy: PolicyConfig): PolicyDecision {
+  for (const pattern of policy.deny.prompts) {
+    try {
+      const regex = new RegExp(pattern);
+      if (regex.test(prompt)) {
+        return { allowed: false, reason: `Matched prompt deny pattern '${pattern}'.` };
+      }
+    } catch {
+      return { allowed: false, reason: `Invalid regex in deny.prompts: '${pattern}'.` };
+    }
+  }
+
   for (const pattern of policy.allow.prompts) {
     try {
       const regex = new RegExp(pattern);

@@ -1,4 +1,4 @@
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { executePrompt } from "./core/agent.js";
 import { loadConfigFromCwd } from "./core/config.js";
@@ -24,6 +24,7 @@ type DoctorCheck = {
   name: DoctorCheckName;
   ok: boolean;
   detail: string;
+  level: "error" | "warning";
 };
 
 const DOCTOR_EXIT_CODES: Record<DoctorCheckName, number> = {
@@ -34,6 +35,7 @@ const DOCTOR_EXIT_CODES: Record<DoctorCheckName, number> = {
   "llm.provider": 0,
   "doctor.runtime": 32,
 };
+const DOCTOR_STRICT_WARNING_EXIT_CODE = 64;
 
 function parseAuditLines(raw: string): AuditEventLine[] {
   const lines = raw
@@ -49,6 +51,33 @@ function parseAuditLines(raw: string): AuditEventLine[] {
       }
     })
     .filter((event) => typeof event === "object");
+}
+
+function filterAuditEvents(
+  events: AuditEventLine[],
+  options: { runId?: string; type?: string; since?: string },
+): AuditEventLine[] {
+  let filtered = events;
+  if (options.runId) {
+    filtered = filtered.filter((event) => event.runId === options.runId);
+  }
+  if (options.type) {
+    filtered = filtered.filter((event) => event.type === options.type);
+  }
+  if (options.since) {
+    const sinceMs = Date.parse(options.since);
+    if (Number.isNaN(sinceMs)) {
+      throw new Error(`Invalid --since date: ${options.since}`);
+    }
+    filtered = filtered.filter((event) => {
+      if (!event.timestamp || typeof event.timestamp !== "string") {
+        return false;
+      }
+      const eventMs = Date.parse(event.timestamp);
+      return !Number.isNaN(eventMs) && eventMs >= sinceMs;
+    });
+  }
+  return filtered;
 }
 
 export async function runCLI(prompt: string, options: { dryRun?: boolean } = {}) {
@@ -126,25 +155,7 @@ export async function logsShowCLI(options: {
 
     const raw = await readFile(filePath, "utf8");
     let events = parseAuditLines(raw);
-    if (options.runId) {
-      events = events.filter((event) => event.runId === options.runId);
-    }
-    if (options.type) {
-      events = events.filter((event) => event.type === options.type);
-    }
-    if (options.since) {
-      const sinceMs = Date.parse(options.since);
-      if (Number.isNaN(sinceMs)) {
-        throw new Error(`Invalid --since date: ${options.since}`);
-      }
-      events = events.filter((event) => {
-        if (!event.timestamp || typeof event.timestamp !== "string") {
-          return false;
-        }
-        const eventMs = Date.parse(event.timestamp);
-        return !Number.isNaN(eventMs) && eventMs >= sinceMs;
-      });
-    }
+    events = filterAuditEvents(events, options);
 
     const limit = options.limit && options.limit > 0 ? options.limit : 20;
     const selected = events.slice(-limit);
@@ -163,24 +174,63 @@ export async function logsShowCLI(options: {
   }
 }
 
-export async function doctorCLI(options: { json?: boolean } = {}) {
+export async function logsExportCLI(options: {
+  output: string;
+  format?: "json" | "jsonl";
+  runId?: string;
+  type?: string;
+  since?: string;
+}) {
+  try {
+    const config = await loadConfigFromCwd();
+    const auditPath = path.resolve(process.cwd(), config.audit.file);
+    const raw = await readFile(auditPath, "utf8");
+    let events = parseAuditLines(raw);
+    events = filterAuditEvents(events, options);
+
+    const outputPath = path.resolve(process.cwd(), options.output);
+    const format = options.format ?? "json";
+    if (format === "jsonl") {
+      const payload = events.map((event) => JSON.stringify(event)).join("\n");
+      await writeFile(outputPath, `${payload}\n`, "utf8");
+    } else {
+      await writeFile(outputPath, JSON.stringify(events, null, 2), "utf8");
+    }
+    console.log(`Exported ${events.length} events to ${outputPath}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown logs export error.";
+    console.error(`Logs export failed: ${message}`);
+  }
+}
+
+export async function doctorCLI(options: { json?: boolean; strict?: boolean } = {}) {
   const checks: DoctorCheck[] = [];
   try {
     const config = await loadConfigFromCwd();
-    checks.push({ name: "config.load", ok: true, detail: "config.yaml is valid" });
+    checks.push({ name: "config.load", ok: true, detail: "config.yaml is valid", level: "error" });
 
     const policy = await loadPolicyFromCwd();
     checks.push({
       name: "policy.load",
       ok: true,
-      detail: `policy default=${policy.default}, prompts=${policy.allow.prompts.length}`,
+      detail: `policy default=${policy.default}, allowPrompts=${policy.allow.prompts.length}, denyPrompts=${policy.deny.prompts.length}`,
+      level: "error",
     });
+    if (policy.allow.prompts.includes(".*")) {
+      checks.push({
+        name: "policy.load",
+        ok: true,
+        detail: "allow.prompts contains '.*' (very broad allow rule)",
+        level: "warning",
+      });
+    }
 
     const auditLogger = new AuditLogger(config);
     checks.push({
       name: "audit.path",
       ok: true,
       detail: auditLogger.getPath(),
+      level: "error",
     });
 
     if (config.llm.provider === "openai") {
@@ -191,12 +241,22 @@ export async function doctorCLI(options: { json?: boolean } = {}) {
         detail: hasKey
           ? `Environment variable ${config.llm.apiKeyEnv} is set`
           : `Environment variable ${config.llm.apiKeyEnv} is missing`,
+        level: "error",
       });
+      if (config.llm.fallbackToMock) {
+        checks.push({
+          name: "llm.provider",
+          ok: true,
+          detail: "Fallback to mock is enabled",
+          level: "warning",
+        });
+      }
     } else {
       checks.push({
         name: "llm.provider",
         ok: true,
         detail: "Using mock provider",
+        level: "warning",
       });
     }
   } catch (error) {
@@ -205,16 +265,23 @@ export async function doctorCLI(options: { json?: boolean } = {}) {
       name: "doctor.runtime",
       ok: false,
       detail: message,
+      level: "error",
     });
   }
 
   let exitCode = 0;
   const failedChecks: DoctorCheck[] = [];
+  const warningChecks: DoctorCheck[] = [];
   for (const check of checks) {
     if (!check.ok) {
       failedChecks.push(check);
       exitCode |= DOCTOR_EXIT_CODES[check.name];
+    } else if (check.level === "warning") {
+      warningChecks.push(check);
     }
+  }
+  if (options.strict && warningChecks.length > 0) {
+    exitCode |= DOCTOR_STRICT_WARNING_EXIT_CODE;
   }
 
   if (options.json) {
@@ -222,6 +289,7 @@ export async function doctorCLI(options: { json?: boolean } = {}) {
       JSON.stringify(
         {
           ok: failedChecks.length === 0,
+          strict: Boolean(options.strict),
           exitCode,
           checks,
         },
@@ -231,7 +299,8 @@ export async function doctorCLI(options: { json?: boolean } = {}) {
     );
   } else {
     for (const check of checks) {
-      console.log(`${check.ok ? "OK" : "FAIL"} ${check.name}: ${check.detail}`);
+      const label = check.ok ? (check.level === "warning" ? "WARN" : "OK") : "FAIL";
+      console.log(`${label} ${check.name}: ${check.detail}`);
     }
   }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { program } from "commander";
-import { doctorCLI, logsShowCLI, policyTestCLI, runCLI } from "../bin/cli.js";
+import { doctorCLI, logsExportCLI, logsShowCLI, policyTestCLI, runCLI } from "../bin/cli.js";
 import { initProject } from "../bin/core/init.js";
 
 program
@@ -77,12 +77,32 @@ logs
     });
   });
 
+logs
+  .command("export")
+  .description("Export audit events to a JSON/JSONL file")
+  .requiredOption("--output <path>", "Output file path")
+  .option("--format <kind>", "json or jsonl", "json")
+  .option("--run-id <id>", "Filter by run ID")
+  .option("--type <name>", "Filter by event type")
+  .option("--since <isoDate>", "Filter events since ISO timestamp")
+  .action(async (options) => {
+    const format = options.format === "jsonl" ? "jsonl" : "json";
+    await logsExportCLI({
+      output: options.output,
+      format,
+      runId: options.runId,
+      type: options.type,
+      since: options.since,
+    });
+  });
+
 program
   .command("doctor")
   .description("Check runtime configuration, policy, and provider prerequisites")
   .option("--json", "Output checks as JSON")
+  .option("--strict", "Treat warnings as failures (exit code includes 64)")
   .action(async (options) => {
-    await doctorCLI({ json: Boolean(options.json) });
+    await doctorCLI({ json: Boolean(options.json), strict: Boolean(options.strict) });
   });
 
 program.parse(process.argv);

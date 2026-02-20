@@ -1,6 +1,9 @@
 version: 1
 default: deny
 
+deny:
+  prompts: []
+
 allow:
   prompts:
     - ".*"
