@@ -7,6 +7,11 @@ default: deny
 
 deny:
   prompts: []
+  tools:
+    http.fetch:
+      hosts: []
+    fs.read:
+      paths: []
 
 allow:
   prompts:

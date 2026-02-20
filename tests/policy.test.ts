@@ -130,4 +130,64 @@ describe("policy", () => {
     expect(evaluateHttpFetch({ url: "https://api.example.com" }, policy).allowed).toBe(true);
     expect(evaluateHttpFetch({ url: "https://example.com" }, policy).allowed).toBe(false);
   });
+
+  it("prioritizes http.fetch deny hosts over allow hosts", () => {
+    const policy = validatePolicy({
+      version: 1,
+      default: "deny",
+      deny: {
+        tools: {
+          "http.fetch": {
+            hosts: ["blocked.example.com"],
+          },
+        },
+      },
+      allow: {
+        tools: {
+          "http.fetch": {
+            enabled: true,
+            hosts: ["*.example.com"],
+          },
+        },
+      },
+    });
+
+    const blocked = evaluateHttpFetch({ url: "https://blocked.example.com" }, policy);
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.reason).toContain("deny");
+  });
+
+  it("prioritizes fs.read deny paths over allowed roots", async () => {
+    const allowedRoot = path.join(tempDir, "allowed");
+    const blockedPath = path.join(allowedRoot, "private");
+    await mkdir(blockedPath, { recursive: true });
+    await writeFile(path.join(blockedPath, "secret.txt"), "secret", "utf8");
+
+    const policy = validatePolicy({
+      version: 1,
+      default: "deny",
+      deny: {
+        tools: {
+          "fs.read": {
+            paths: [path.relative(process.cwd(), blockedPath)],
+          },
+        },
+      },
+      allow: {
+        tools: {
+          "fs.read": {
+            enabled: true,
+            roots: [path.relative(process.cwd(), allowedRoot)],
+          },
+        },
+      },
+    });
+
+    const blocked = evaluateFsRead(
+      { path: path.relative(process.cwd(), path.join(blockedPath, "secret.txt")) },
+      policy,
+    );
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.reason).toContain("deny");
+  });
 });

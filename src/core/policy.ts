@@ -27,6 +27,14 @@ export type PolicyConfig = {
   default: PolicyDefault;
   deny: {
     prompts: string[];
+    tools: {
+      "http.fetch": {
+        hosts: string[];
+      };
+      "fs.read": {
+        paths: string[];
+      };
+    };
   };
   allow: {
     prompts: string[];
@@ -55,6 +63,10 @@ const DEFAULT_POLICY: PolicyConfig = {
   default: "deny",
   deny: {
     prompts: [],
+    tools: {
+      "http.fetch": { hosts: [] },
+      "fs.read": { paths: [] },
+    },
   },
   allow: {
     prompts: [],
@@ -120,7 +132,12 @@ export function validatePolicy(raw: unknown): PolicyConfig {
 
   const allowRoot = obj.allow === undefined ? {} : asRecord(obj.allow);
   const denyRoot = obj.deny === undefined ? {} : asRecord(obj.deny);
+  const denyToolsRoot = denyRoot.tools === undefined ? {} : asRecord(denyRoot.tools);
   const toolsRoot = allowRoot.tools === undefined ? {} : asRecord(allowRoot.tools);
+  const denyHttpRoot =
+    denyToolsRoot["http.fetch"] === undefined ? {} : asRecord(denyToolsRoot["http.fetch"]);
+  const denyFsRoot =
+    denyToolsRoot["fs.read"] === undefined ? {} : asRecord(denyToolsRoot["fs.read"]);
 
   const httpRoot =
     toolsRoot["http.fetch"] === undefined ? {} : asRecord(toolsRoot["http.fetch"]);
@@ -132,6 +149,14 @@ export function validatePolicy(raw: unknown): PolicyConfig {
     default: obj.default,
     deny: {
       prompts: asStringArray(denyRoot.prompts, "deny.prompts"),
+      tools: {
+        "http.fetch": {
+          hosts: asStringArray(denyHttpRoot.hosts, "deny.tools.http.fetch.hosts"),
+        },
+        "fs.read": {
+          paths: asStringArray(denyFsRoot.paths, "deny.tools.fs.read.paths"),
+        },
+      },
     },
     allow: {
       prompts: asStringArray(allowRoot.prompts, "allow.prompts"),
@@ -242,14 +267,24 @@ export function evaluateHttpFetch(
     return { allowed: false, reason: "Invalid URL." };
   }
 
-  const allowedHosts = policy.allow.tools["http.fetch"].hosts.map((host) => host.toLowerCase().trim());
-  const isAllowed = allowedHosts.some((allowed) => {
-    if (allowed.startsWith("*.")) {
-      const suffix = allowed.slice(1);
-      return hostname.endsWith(suffix) && hostname !== suffix.slice(1);
+  const deniedHosts = policy.deny.tools["http.fetch"].hosts.map((host) => host.toLowerCase().trim());
+  const hostMatches = (candidate: string, pattern: string): boolean => {
+    if (pattern.startsWith("*.")) {
+      const suffix = pattern.slice(1);
+      return candidate.endsWith(suffix) && candidate !== suffix.slice(1);
     }
-    return hostname === allowed;
-  });
+    return candidate === pattern;
+  };
+  const isDenied = deniedHosts.some((denied) => hostMatches(hostname, denied));
+  if (isDenied) {
+    return {
+      allowed: false,
+      reason: `Host '${hostname}' is blocked by deny list.`,
+    };
+  }
+
+  const allowedHosts = policy.allow.tools["http.fetch"].hosts.map((host) => host.toLowerCase().trim());
+  const isAllowed = allowedHosts.some((allowed) => hostMatches(hostname, allowed));
 
   if (!isAllowed) {
     return {
@@ -272,6 +307,18 @@ export function evaluateFsRead(input: FsReadInput, policy: PolicyConfig): Policy
   }
 
   const requestedPath = path.resolve(process.cwd(), input.path);
+  const deniedPaths = policy.deny.tools["fs.read"].paths;
+  const matchesDeniedPath = deniedPaths.some((denyPath) => {
+    const resolvedDenyPath = path.resolve(process.cwd(), denyPath);
+    return (
+      requestedPath === resolvedDenyPath ||
+      requestedPath.startsWith(`${resolvedDenyPath}${path.sep}`)
+    );
+  });
+  if (matchesDeniedPath) {
+    return { allowed: false, reason: "Requested path is blocked by deny paths." };
+  }
+
   const matchesRoot = allowedRoots.some((root) => {
     const resolvedRoot = path.resolve(process.cwd(), root);
     return (

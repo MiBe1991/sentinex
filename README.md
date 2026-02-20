@@ -57,6 +57,7 @@ $env:OPENAI_API_KEY="your_key_here"
 - Tool policy switches: `allow.tools.http.fetch.enabled` / `allow.tools.fs.read.enabled`
 - Host allowlist supports exact hosts and wildcard subdomains (example: `*.example.com`)
 - Prompt deny rules with priority over allow (`deny.prompts`)
+- Tool-level deny rules with priority over allow (`deny.tools.http.fetch.hosts`, `deny.tools.fs.read.paths`)
 - Interactive approval workflow (`prompt`, `auto-approve`, `auto-deny`)
 - JSONL audit logging (`run.started`, `action.requested`, `policy.decision`, `action.result`, `run.finished`)
 - Audit rotation via `audit.maxBytes` and `audit.maxFiles`
