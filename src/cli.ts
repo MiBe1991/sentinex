@@ -1,5 +1,6 @@
 import { access, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { stringify as yamlStringify } from "yaml";
 import { executePrompt } from "./core/agent.js";
 import { loadConfigFromCwd, type RuntimeConfig } from "./core/config.js";
 import {
@@ -7,6 +8,7 @@ import {
   evaluatePrompt,
   evaluatePromptDetailed,
   evaluateTool,
+  type PolicyConfig,
 } from "./core/policy.js";
 import { AuditLogger } from "./core/audit.js";
 
@@ -268,12 +270,69 @@ export function lintPolicy(policy: Awaited<ReturnType<typeof loadPolicyFromCwd>>
   return findings;
 }
 
+function dedupePreserveOrder(values: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    if (seen.has(value)) {
+      continue;
+    }
+    seen.add(value);
+    result.push(value);
+  }
+  return result;
+}
+
+export function normalizePolicy(policy: PolicyConfig): PolicyConfig {
+  return {
+    ...policy,
+    deny: {
+      ...policy.deny,
+      prompts: dedupePreserveOrder(policy.deny.prompts),
+      tools: {
+        "http.fetch": {
+          hosts: dedupePreserveOrder(policy.deny.tools["http.fetch"].hosts),
+        },
+        "fs.read": {
+          paths: dedupePreserveOrder(policy.deny.tools["fs.read"].paths),
+        },
+      },
+    },
+    allow: {
+      ...policy.allow,
+      prompts: dedupePreserveOrder(policy.allow.prompts),
+      tools: {
+        ...policy.allow.tools,
+        "http.fetch": {
+          ...policy.allow.tools["http.fetch"],
+          hosts: dedupePreserveOrder(policy.allow.tools["http.fetch"].hosts),
+        },
+        "fs.read": {
+          ...policy.allow.tools["fs.read"],
+          roots: dedupePreserveOrder(policy.allow.tools["fs.read"].roots),
+        },
+      },
+    },
+  };
+}
+
 export async function policyLintCLI(options: {
   json?: boolean;
   failOn?: "error" | "warn" | "never";
+  fix?: boolean;
 }) {
   try {
-    const policy = await loadPolicyFromCwd();
+    let policy = await loadPolicyFromCwd();
+    let fixed = false;
+    if (options.fix) {
+      const normalized = normalizePolicy(policy);
+      if (JSON.stringify(normalized) !== JSON.stringify(policy)) {
+        const policyPath = path.resolve(process.cwd(), ".sentinex", "policy.yaml");
+        await writeFile(policyPath, yamlStringify(normalized), "utf8");
+        policy = normalized;
+        fixed = true;
+      }
+    }
     const findings = lintPolicy(policy);
     const failOn = options.failOn ?? "error";
     const hasError = findings.some((finding) => finding.level === "error");
@@ -297,6 +356,7 @@ export async function policyLintCLI(options: {
               error: findings.filter((finding) => finding.level === "error").length,
               warn: findings.filter((finding) => finding.level === "warn").length,
             },
+            fixed,
             findings,
           },
           null,
@@ -306,6 +366,9 @@ export async function policyLintCLI(options: {
     } else {
       if (findings.length === 0) {
         console.log("No policy lint findings.");
+      }
+      if (options.fix) {
+        console.log(fixed ? "Applied safe policy autofixes." : "No safe policy autofixes applied.");
       }
       for (const finding of findings) {
         console.log(`${finding.level.toUpperCase()} ${finding.code}: ${finding.message}`);

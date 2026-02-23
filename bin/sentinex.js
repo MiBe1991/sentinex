@@ -60,12 +60,14 @@ policy
   .command("lint")
   .description("Run static policy checks for risky or invalid configurations")
   .option("--json", "Output lint findings as JSON")
+  .option("--fix", "Apply safe autofixes (dedupe policy arrays)")
   .option("--fail-on <level>", "Fail on error|warn|never", "error")
   .action(async (options) => {
     const failOn =
       options.failOn === "warn" || options.failOn === "never" ? options.failOn : "error";
     await policyLintCLI({
       json: Boolean(options.json),
+      fix: Boolean(options.fix),
       failOn,
     });
   });
