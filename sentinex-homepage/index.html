@@ -25,7 +25,9 @@
       <nav class="site-nav" aria-label="Main navigation">
         <a href="#features">Features</a>
         <a href="#architecture">Architecture</a>
+        <a href="#use-cases">Use Cases</a>
         <a href="#policy">Policy</a>
+        <a href="#faq">FAQ</a>
         <a href="#quickstart">Quickstart</a>
       </nav>
       <a class="btn btn-outline" href="https://github.com/MiBe1991/sentinex" target="_blank" rel="noreferrer">
@@ -75,6 +77,13 @@
                 <span>Host/path-level controls</span>
               </li>
             </ul>
+            <div class="hero-meta">
+              <a href="https://github.com/MiBe1991/sentinex/releases/tag/v0.1.0" target="_blank" rel="noreferrer">v0.1.0 release</a>
+              <span aria-hidden="true">•</span>
+              <a href="https://github.com/MiBe1991/sentinex/blob/main/SECURITY.md" target="_blank" rel="noreferrer">Security policy</a>
+              <span aria-hidden="true">•</span>
+              <a href="https://github.com/MiBe1991/sentinex/blob/main/ROADMAP.md" target="_blank" rel="noreferrer">Roadmap</a>
+            </div>
           </div>
 
           <!-- Animated terminal -->
@@ -292,6 +301,65 @@
         </div>
       </section>
 
+      <!-- USE CASES -->
+      <section id="use-cases" class="section reveal" aria-labelledby="use-cases-heading">
+        <div class="section-label">Use Cases</div>
+        <h2 id="use-cases-heading">Where Sentinex fits today.</h2>
+        <p class="section-sub">Sentinex is not a chat UI. It is a constrained execution kernel for teams that care about local automation boundaries and auditability.</p>
+        <div class="feature-grid">
+          <article class="card">
+            <h3>DevOps Runbooks</h3>
+            <p>Allow read-only filesystem and specific internal APIs while denying shell execution and arbitrary outbound requests.</p>
+            <div class="card-tag">ops · read-only</div>
+          </article>
+          <article class="card">
+            <h3>Security Triage</h3>
+            <p>Analyze logs and configs with an auditable trail for every tool action and policy decision.</p>
+            <div class="card-tag">forensics · audit</div>
+          </article>
+          <article class="card">
+            <h3>CI Guardrails</h3>
+            <p>Use non-interactive approvals with deterministic policies and `doctor`/`policy lint` checks before runtime.</p>
+            <div class="card-tag">ci · deterministic</div>
+          </article>
+          <article class="card">
+            <h3>Local LLM Prototyping</h3>
+            <p>Develop plans with the mock provider, then switch to OpenAI-compatible endpoints without changing runtime policy semantics.</p>
+            <div class="card-tag">mock → openai</div>
+          </article>
+        </div>
+      </section>
+
+      <!-- THREAT MODEL -->
+      <section id="threat-model" class="section reveal" aria-labelledby="threat-model-heading">
+        <div class="section-label">Threat Model</div>
+        <h2 id="threat-model-heading">What Sentinex is designed to prevent.</h2>
+        <p class="section-sub">Sentinex reduces accidental overreach and unsafe tool execution. It does not replace OS hardening, sandboxing, or endpoint security.</p>
+        <div class="threat-grid">
+          <div class="threat-panel">
+            <h3>Mitigates</h3>
+            <ul>
+              <li>Implicit tool access without explicit policy allow rules</li>
+              <li>Prompt-triggered access to non-whitelisted hosts or paths</li>
+              <li>Unlogged tool execution and missing operator visibility</li>
+              <li>Provider output shape drift via action-plan validation</li>
+            </ul>
+          </div>
+          <div class="threat-panel">
+            <h3>Does Not Replace</h3>
+            <ul>
+              <li>OS/user permissions and filesystem ACLs</li>
+              <li>Network segmentation, proxies, and firewalls</li>
+              <li>Secrets management and endpoint monitoring</li>
+              <li>Review of business logic or prompt intent</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout">
+          <strong>Recommended posture:</strong> run Sentinex under least-privileged OS accounts and treat policy files as code reviewed artifacts.
+        </div>
+      </section>
+
       <!-- QUICKSTART -->
       <section id="quickstart" class="section reveal" aria-labelledby="qs-heading">
         <div class="section-label">Quickstart</div>
@@ -328,6 +396,52 @@
 <span class="sh-comment"># 6. Check system health</span>
 <span class="sh-cmd">npx</span> sentinex doctor --json</code></pre>
         </div>
+        <div class="quickstart-oneliner">
+          <div class="callout">
+            <strong>PowerShell one-liner:</strong>
+            <code>git clone https://github.com/MiBe1991/sentinex.git &amp;&amp; cd sentinex &amp;&amp; npm install &amp;&amp; npm run build &amp;&amp; npx sentinex init &amp;&amp; npx sentinex policy lint --fail-on error &amp;&amp; npx sentinex run "hello world" &amp;&amp; npx sentinex doctor --json</code>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section id="faq" class="section reveal" aria-labelledby="faq-heading">
+        <div class="section-label">FAQ</div>
+        <h2 id="faq-heading">Common maintainer and user questions.</h2>
+        <div class="faq-list">
+          <details class="faq-item">
+            <summary>Is Sentinex a chatbot framework?</summary>
+            <p>No. Sentinex is a local, policy-gated execution runtime. It can use an LLM provider, but the product focus is controlled action execution and auditability.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Can I run it without an API key?</summary>
+            <p>Yes. Use the mock provider (default) for local development, dry-runs, and policy/runtime testing. OpenAI-compatible providers are optional.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What is enforced before a tool runs?</summary>
+            <p>Prompt/tool policy checks (deny &gt; allow), action-plan validation, optional approval flow, and tool-specific scope checks (hosts, roots, byte limits).</p>
+          </details>
+          <details class="faq-item">
+            <summary>Where should I start as a contributor?</summary>
+            <p>Run <code>npm test</code>, read <code>AGENTS.md</code>, <code>CONTRIBUTING.md</code>, and check <code>ROADMAP.md</code> for current milestones and issues.</p>
+          </details>
+        </div>
+      </section>
+
+      <!-- TRUST / CTA -->
+      <section class="section reveal" aria-labelledby="trust-heading">
+        <div class="cta-panel">
+          <div>
+            <div class="section-label">Project Trust</div>
+            <h2 id="trust-heading">Open development, explicit boundaries.</h2>
+            <p class="section-sub cta-sub">Sentinex ships with CI, policy linting, maintainer runbooks, security reporting, and a public roadmap. Treat it like infrastructure, not a demo script.</p>
+          </div>
+          <div class="cta-actions">
+            <a class="btn btn-primary" href="https://github.com/MiBe1991/sentinex" target="_blank" rel="noreferrer">Open Repository</a>
+            <a class="btn btn-outline" href="https://github.com/MiBe1991/sentinex/blob/main/ROADMAP.md" target="_blank" rel="noreferrer">View Roadmap</a>
+            <a class="btn btn-outline" href="https://github.com/MiBe1991/sentinex/security/policy" target="_blank" rel="noreferrer">Report Security Issue</a>
+          </div>
+        </div>
       </section>
     </main>
 
@@ -343,6 +457,8 @@
         <nav class="footer-nav" aria-label="Footer navigation">
           <a href="#features">Features</a>
           <a href="#architecture">Architecture</a>
+          <a href="#use-cases">Use Cases</a>
+          <a href="#faq">FAQ</a>
           <a href="#quickstart">Quickstart</a>
           <a href="https://github.com/MiBe1991/sentinex" target="_blank" rel="noreferrer">GitHub</a>
         </nav>

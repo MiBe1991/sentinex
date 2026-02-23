@@ -49,6 +49,7 @@ npx sentinex run "hello world"
 npx sentinex run "fetch https://example.com" --dry-run
 npx sentinex policy test --prompt "contains secret"
 npx sentinex policy lint --fail-on warn --json
+npx sentinex policy lint --fix --fail-on error
 npx sentinex logs show --json --since 2026-02-20T00:00:00Z --until 2026-02-21T00:00:00Z
 npx sentinex logs export --output out/audit.json --format json
 npx sentinex doctor --strict --json
@@ -75,6 +76,7 @@ npm run test:coverage
 - Code of conduct: `CODE_OF_CONDUCT.md`
 - License: `LICENSE`
 - Changelog: `CHANGELOG.md`
+- Roadmap: `ROADMAP.md`
 
 ## Vision
 Sentinex aims to become an open-source reference kernel for secure local agent automation.
